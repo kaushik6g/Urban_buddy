@@ -35,6 +35,8 @@ const sanitizeUser = (user) => ({
   createdAt: user.created_at,
 });
 
+/* ================= REGISTER ================= */
+
 const register = asyncHandler(async (req, res, next) => {
   const { name, email, password, role = 'user', communityName, communityCode } = req.body;
 
@@ -59,6 +61,7 @@ const register = asyncHandler(async (req, res, next) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   let joinedCommunityId = null;
+
   if (role === 'user' && communityCode) {
     const { data: community, error: communityError } = await supabase
       .from('communities')
@@ -95,6 +98,7 @@ const register = asyncHandler(async (req, res, next) => {
 
   if (role === 'admin') {
     const code = await generateUniqueCommunityCode();
+
     const { data: newCommunity, error: communityCreateError } = await supabase
       .from('communities')
       .insert({
@@ -139,8 +143,12 @@ const register = asyncHandler(async (req, res, next) => {
   });
 });
 
+/* ================= LOGIN (FIXED) ================= */
+
 const login = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
+
+  console.log("LOGIN BODY:", req.body); // 🔍 Debug
 
   const { data: user, error } = await supabase
     .from('users')
@@ -149,14 +157,31 @@ const login = asyncHandler(async (req, res, next) => {
     .maybeSingle();
 
   if (error) {
+    console.error("SUPABASE ERROR:", error);
     return next(new ApiError(500, error.message));
   }
+
+  console.log("USER FROM DB:", user); // 🔍 Debug
 
   if (!user) {
     return next(new ApiError(401, 'Invalid email or password'));
   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
+  // 🔥 CRITICAL FIX
+  if (!user.password) {
+    console.error("Password missing in DB!");
+    return next(new ApiError(500, 'Password not found in database'));
+  }
+
+  let isMatch = false;
+
+  try {
+    isMatch = await bcrypt.compare(password, user.password);
+  } catch (err) {
+    console.error("BCRYPT ERROR:", err);
+    return next(new ApiError(500, 'Error comparing passwords'));
+  }
+
   if (!isMatch) {
     return next(new ApiError(401, 'Invalid email or password'));
   }
