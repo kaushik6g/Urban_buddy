@@ -141,7 +141,8 @@ const ProfilePage = () => {
           {deleteFeedback && <p role="status" className="text-sm">{deleteFeedback}</p>}
           {detailsError && <button type="button" onClick={loadDetails}>Retry loading complaints</button>}
           {complaints.map((item) => (
-            <details key={item.id} className="rounded-md border border-line bg-paper p-3">
+            <article key={item.id} className="rounded-md border border-line bg-paper p-3">
+              <details>
               <summary className="flex flex-wrap cursor-pointer list-none items-start justify-between gap-4 [&::-webkit-details-marker]:hidden">
               <div>
                 <p className="font-medium text-ink">{item.title}</p>
@@ -169,10 +170,11 @@ const ProfilePage = () => {
                     <ComplaintPhoto key={index} url={url} alt={`Complaint photo ${index + 1}`} />
                   ))}
                 </div>
-              <button type="button" className="mt-3 rounded-md px-2 py-1 text-sm font-semibold text-red-800 hover:bg-red-50 disabled:opacity-60" disabled={deletingId !== null || joining} onClick={() => void deleteComplaint(item.id)}>
+              </details>
+              <button type="button" className="mt-3 rounded-md border border-rose-200 px-2 py-1 text-sm font-semibold text-red-800 hover:bg-red-50 disabled:opacity-60" disabled={deletingId !== null || joining} onClick={() => void deleteComplaint(item.id)}>
                 {deletingId === item.id ? 'Deleting�' : 'Delete complaint'}
               </button>
-            </details>
+            </article>
           ))}
           {!detailsError && !complaints.length && <p className="text-sm text-muted">No activity yet.</p>}
         </div>
