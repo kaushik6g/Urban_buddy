@@ -13,6 +13,7 @@ const ReportIssuePage = () => {
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   const [address, setAddress] = useState('');
+  const [gps, setGps] = useState<{ latitude?: number; longitude?: number }>({});
   const [images, setImages] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -30,8 +31,9 @@ const ReportIssuePage = () => {
   const pickCurrentLocation = () => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLatitude(String(position.coords.latitude));
-        setLongitude(String(position.coords.longitude));
+        setGps({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+        setLatitude(String(Number(position.coords.latitude.toFixed(5))));
+        setLongitude(String(Number(position.coords.longitude.toFixed(5))));
       },
       () => {
         setError('Location access denied. Please enter location manually.');
@@ -50,14 +52,15 @@ const ReportIssuePage = () => {
       formData.append('title', title);
       formData.append('description', description);
       formData.append('category', category);
-      formData.append('latitude', latitude);
-      formData.append('longitude', longitude);
+      formData.append('latitude', String(gps.latitude ?? latitude));
+      formData.append('longitude', String(gps.longitude ?? longitude));
       formData.append('address', address);
       images.forEach((file) => formData.append('images', file));
 
       const response = await complaintApi.create(formData);
       form.reset();
       setCategory(categories[0]);
+      setGps({});
       setLatitude('');
       setLongitude('');
       window.alert(response.data.message || 'Complaint submitted.');
@@ -118,7 +121,7 @@ const ReportIssuePage = () => {
             Latitude
             <Input
               value={latitude}
-              onChange={(e) => setLatitude(e.target.value)}
+              onChange={(e) => { setLatitude(e.target.value); setGps(previous => ({ ...previous, latitude: undefined })); }}
               required
               type="number"
               step="any"
@@ -128,7 +131,7 @@ const ReportIssuePage = () => {
             Longitude
             <Input
               value={longitude}
-              onChange={(e) => setLongitude(e.target.value)}
+              onChange={(e) => { setLongitude(e.target.value); setGps(previous => ({ ...previous, longitude: undefined })); }}
               required
               type="number"
               step="any"
