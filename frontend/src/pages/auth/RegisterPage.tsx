@@ -81,7 +81,7 @@ const RegisterPage = () => {
               />
             ) : (
               <Input
-                placeholder="Community code (optional)"
+                placeholder="Community code" required
                 value={communityCode}
                 onChange={(e) => setCommunityCode(e.target.value.toUpperCase())}
               />
