@@ -38,7 +38,7 @@ const AdminDashboardPage = () => {
     const inProgress = complaints.filter((c) => c.status === 'In Progress').length;
     const resolved = complaints.filter((c) => c.status === 'Resolved').length;
     const rejected = complaints.filter((c) => c.status === 'Rejected').length;
-    return { total: complaints.length - rejected, pending, approved, inProgress, resolved, rejected };
+    return { total: complaints.length, pending, approved, inProgress, resolved, rejected };
   }, [complaints]);
 
   return (
