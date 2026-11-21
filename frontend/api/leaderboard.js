@@ -17,16 +17,25 @@ export default async function handler(req, res) {
     if (!session.ok) return res.status([401, 403].includes(session.status) ? session.status : 502).end();
     const profile = await session.json();
     if (!profile.success) return res.status(401).end();
+    const communityId = profile.data?.user?.communityId;
+    if (!communityId) return res.json({ success: true, data: [] });
+
     const url = new URL('/rest/v1/users', 'https://rvhppsrmkautqvdwiibh.supabase.co');
     url.search = new URLSearchParams({
-      select: 'id,name,points,created_at', role: 'eq.user',
-      order: 'points.desc,created_at.asc,id.asc', limit: '20'
+      select: 'id,name,points,created_at', role: 'eq.user', community_id: 'eq.' + communityId,
+      order: 'points.desc,created_at.asc,id.asc', limit: '500'
     }).toString();
     const headers = { apikey: key };
     if (!key.startsWith('sb_secret_')) headers.Authorization = 'Bearer ' + key;
-    const result = await fetch(url, { headers, signal: AbortSignal.timeout(10000) });
-    if (!result.ok) return res.status(502).end();
-    const users = await result.json();
+    const users = [];
+    for (let offset = 0; ; offset += 500) {
+      url.searchParams.set('offset', String(offset));
+      const result = await fetch(url, { headers, signal: AbortSignal.timeout(10000) });
+      if (!result.ok) return res.status(502).end();
+      const page = await result.json();
+      users.push(...page);
+      if (page.length < 500) break;
+    }
     return res.json({ success: true, data: users.map((user, index) => ({
       id: user.id, name: user.name, points: user.points, joinedAt: user.created_at, rank: index + 1
     })) });
