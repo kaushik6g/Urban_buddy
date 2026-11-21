@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 const Card = ({ children, className = '' }: { children: ReactNode; className?: string }) => {
   return (
-    <div className={`rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm backdrop-blur ${className}`}>
+    <div className={`min-w-0 rounded-md border border-line bg-white p-4 sm:p-6 ${className}`}>
       {children}
     </div>
   );

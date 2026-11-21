@@ -2,7 +2,7 @@ import type { InputHTMLAttributes, TextareaHTMLAttributes } from 'react';
 
 export const Input = ({ className = '', ...props }: InputHTMLAttributes<HTMLInputElement>) => (
   <input
-    className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100 ${className}`}
+    className={`w-full rounded-md border border-line bg-white px-3 py-2.5 text-sm text-ink focus:border-leaf ${className}`}
     {...props}
   />
 );
@@ -12,7 +12,7 @@ export const TextArea = ({
   ...props
 }: TextareaHTMLAttributes<HTMLTextAreaElement>) => (
   <textarea
-    className={`min-h-32 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100 ${className}`}
+    className={`min-h-32 w-full rounded-md border border-line bg-white px-3 py-2.5 text-sm text-ink focus:border-leaf ${className}`}
     {...props}
   />
 );

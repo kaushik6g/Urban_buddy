@@ -1,17 +1,27 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap');
 @import 'tailwindcss';
 
+@theme {
+  --color-ink: #242922;
+  --color-muted: #586056;
+  --color-line: #d5d9d0;
+  --color-paper: #f7f7f3;
+  --color-leaf: #29583f;
+}
+
 :root {
-  font-family: 'Sora', sans-serif;
-  color: #0f172a;
-  background: #f8fafc;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color: var(--color-ink);
+  background: var(--color-paper);
 }
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
+body { margin: 0; min-width: 0; }
+:focus-visible { outline: 2px solid var(--color-leaf); outline-offset: 3px; }
+button:enabled, select { cursor: pointer; }
+main { overflow-wrap: anywhere; }
+h1, h2, h3 { text-wrap: balance; }
+.field-label { display: grid; gap: .35rem; font-size: .875rem; font-weight: 600; }
+.field-label :is(input,textarea,select) { font-weight: 400; min-width: 0; }
+.metric-strip { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1px; background: var(--color-line); border-block: 1px solid var(--color-line); }
+.metric-strip > div { background: var(--color-paper); padding: 1rem; }
+@media (min-width: 48rem) {
+  .metric-strip { grid-template-columns: repeat(auto-fit,minmax(7rem,1fr)); }
 }
