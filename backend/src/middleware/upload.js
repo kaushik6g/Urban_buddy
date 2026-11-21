@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
-const { v4: uuid } = require('uuid');
+const { randomUUID } = require('node:crypto');
 const ApiError = require('../utils/apiError');
 
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png']);
@@ -16,7 +16,7 @@ const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, `${uuid()}${ext}`);
+    cb(null, `${randomUUID()}${ext}`);
   },
 });
 
