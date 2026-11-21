@@ -62,7 +62,10 @@ const register = asyncHandler(async (req, res, next) => {
 
   let joinedCommunityId = null;
 
-  if (role === 'user' && communityCode) {
+  if (role === 'user') {
+    if (typeof communityCode !== 'string' || !communityCode.trim()) {
+      return next(new ApiError(400, 'Community code is required'));
+    }
     const { data: community, error: communityError } = await supabase
       .from('communities')
       .select('id')
@@ -148,8 +151,6 @@ const register = asyncHandler(async (req, res, next) => {
 const login = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
-  console.log("LOGIN BODY:", req.body); // 🔍 Debug
-
   const { data: user, error } = await supabase
     .from('users')
     .select('id, name, email, role, points, created_at, password, community_id, communities!users_community_id_fkey(id, name, code)')
@@ -160,8 +161,6 @@ const login = asyncHandler(async (req, res, next) => {
     console.error("SUPABASE ERROR:", error);
     return next(new ApiError(500, error.message));
   }
-
-  console.log("USER FROM DB:", user); // 🔍 Debug
 
   if (!user) {
     return next(new ApiError(401, 'Invalid email or password'));
@@ -184,6 +183,26 @@ const login = asyncHandler(async (req, res, next) => {
 
   if (!isMatch) {
     return next(new ApiError(401, 'Invalid email or password'));
+  }
+
+  if (user.role === 'user') {
+    const code = typeof req.body.communityCode === 'string' ? req.body.communityCode.trim().toUpperCase() : '';
+    if (!code) return next(new ApiError(400, 'Community code is required'));
+    if (!user.community_id) {
+      const { data: community, error: lookupError } = await supabase.from('communities')
+        .select('id, name, code').eq('code', code).maybeSingle();
+      if (lookupError) return next(new ApiError(500, lookupError.message));
+      if (!community) return next(new ApiError(403, 'Invalid community code'));
+      const { data: joined, error: joinError } = await supabase.from('users')
+        .update({ community_id: community.id }).eq('id', user.id).is('community_id', null)
+        .select('id').maybeSingle();
+      if (joinError) return next(new ApiError(500, joinError.message));
+      if (!joined) return next(new ApiError(409, 'Membership changed. Please sign in again.'));
+      user.community_id = community.id;
+      user.communities = community;
+    } else if (user.communities?.code !== code) {
+      return next(new ApiError(403, 'Invalid community code'));
+    }
   }
 
   const token = signToken(user);
