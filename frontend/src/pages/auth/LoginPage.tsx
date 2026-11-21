@@ -48,10 +48,6 @@ const LoginPage = () => {
             required
           />
 
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={adminLogin} onChange={(e) => setAdminLogin(e.target.checked)} />
-            Sign in as an admin
-          </label>
           {!adminLogin && (
             <Input aria-label="Community code" placeholder="Community code" value={communityCode}
               onChange={(e) => setCommunityCode(e.target.value.toUpperCase())} required />
@@ -62,6 +58,10 @@ const LoginPage = () => {
           <Button className="w-full" disabled={loading} type="submit">
             {loading ? 'Signing in...' : 'Sign in'}
           </Button>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={adminLogin} onChange={(e) => setAdminLogin(e.target.checked)} />
+            Sign in as an admin
+          </label>
         </form>
 
         <p className="mt-4 text-center text-sm text-slate-600">
