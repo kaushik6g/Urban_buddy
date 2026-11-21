@@ -50,7 +50,7 @@ const DashboardPage = () => {
   }, [user?.id]);
 
   const stats = useMemo(() => {
-    const total = myComplaints.filter((item) => item.status !== 'Rejected').length;
+    const total = myComplaints.length;
     const resolved = myComplaints.filter((c) => c.status === 'Resolved').length;
     const inProgress = myComplaints.filter((c) => c.status === 'In Progress').length;
     return { total, resolved, inProgress };
