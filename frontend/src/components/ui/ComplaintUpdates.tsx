@@ -28,6 +28,7 @@ function identifyBackwardUpdates(items: Update[]) {
 }
 
 export default function ComplaintUpdates() {
+  const [visibleCount, setVisibleCount] = useState(3);
   const [items, setItems] = useState<Update[]>([]);
   const [message, setMessage] = useState('Loading updates...');
   useEffect(() => {
@@ -40,7 +41,7 @@ export default function ComplaintUpdates() {
       <h2 className="text-lg font-semibold">Updates</h2>
       {items.length ? (
         <ul className="mt-3 divide-y divide-line">
-          {items.map((item) => (
+          {items.slice(0, visibleCount).map((item) => (
             <li key={item.id} className="space-y-1 py-3">
               <p>
                 Your report <strong>&ldquo;{item.title}&rdquo;</strong> {statusMessages[item.status] ?? 'was updated'}{backwardUpdates.has(item.id) && ' again'}.
@@ -55,6 +56,12 @@ export default function ComplaintUpdates() {
           ))}
         </ul>
       ) : <p role="status" className="mt-2 text-sm text-muted">{message}</p>}
+      {visibleCount < items.length && (
+        <button type="button" className="mt-2 rounded border border-line px-3 py-2 text-sm font-semibold text-leaf"
+          onClick={() => setVisibleCount((count) => count + 3)}>
+          Show more
+        </button>
+      )}
     </Card>
   );
 }
