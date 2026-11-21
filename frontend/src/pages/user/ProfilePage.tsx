@@ -17,14 +17,18 @@ const ProfilePage = () => {
     }).catch(() => setArchiveError(true));
   };
   const [deleteFeedback, setDeleteFeedback] = useState('');
-  const deleteComplaint = async (id: string) => {
-    if (deletingId || !window.confirm('Delete this complaint? It will be removed from active reports and listed in Deleted complaints.')) return;
+  const deleteComplaint = async ({ id, title, status }: Complaint) => {
+    const pointsMessage = ['Approved', 'In Progress', 'Resolved'].includes(status)
+      ? 'Deleting this report also removes its 15 approval points.'
+      : 'This report has no approval points to remove.';
+    if (deletingId || !window.confirm(`Delete “${title}”? ${pointsMessage} It will move to Deleted complaints.`)) return;
     setDeletingId(id);
     setDeleteFeedback('');
     try {
       await complaintApi.remove(id);
       setComplaints((current) => current.filter((complaint) => complaint.id !== id));
       loadDeleted();
+      loadProfile();
       window.alert('Complaint deleted.');
     } catch {
       setDeleteFeedback('Could not delete the complaint. Please try again.');
@@ -181,7 +185,7 @@ const ProfilePage = () => {
                   ))}
                 </div>
               </details>
-              <button type="button" className="mt-3 rounded-md border border-rose-200 px-2 py-1 text-sm font-semibold text-red-800 hover:bg-red-50 disabled:opacity-60" disabled={deletingId !== null || joining} onClick={() => void deleteComplaint(item.id)}>
+              <button type="button" className="mt-3 rounded-md border border-rose-200 px-2 py-1 text-sm font-semibold text-red-800 hover:bg-red-50 disabled:opacity-60" disabled={deletingId !== null || joining} onClick={() => void deleteComplaint(item)}>
                 {deletingId === item.id ? 'Deleting�' : 'Delete complaint'}
               </button>
             </article>
