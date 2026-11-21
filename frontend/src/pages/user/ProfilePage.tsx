@@ -88,6 +88,46 @@ const ProfilePage = () => {
     return <Card>Loading profile...</Card>;
   }
 
+  const activeComplaints = complaints.filter((item) => item.status !== 'Rejected');
+  const rejectedComplaints = complaints.filter((item) => item.status === 'Rejected');
+
+  const renderComplaint = (item: (typeof complaints)[number]) => (
+            <article key={item.id} className="rounded-md border border-line bg-paper p-3">
+              <details>
+              <summary className="flex flex-wrap cursor-pointer list-none items-start justify-between gap-4 [&::-webkit-details-marker]:hidden">
+              <div>
+                <p className="font-medium text-ink">{item.title}</p>
+                <p className="text-xs text-muted">{new Date(item.createdAt).toLocaleString()}</p>
+                {item.status === 'Rejected' && item.rejectNote && (
+                  <p className="mt-1 text-xs font-medium text-rose-700">Rejected Reason: {item.rejectNote}</p>
+                )}
+                {item.status !== 'Rejected' && item.progressNote && (
+                  <p className="mt-1 text-xs font-medium text-leaf">Latest Update: {item.progressNote}</p>
+                )}
+              </div>
+              <span className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                <Badge text={item.status} />
+                <span className="text-sm font-semibold rounded-md border border-line bg-white px-2 py-1 text-leaf">Issue details</span>
+              </span>
+              </summary>
+
+                <div className="mt-3 space-y-2 text-sm text-ink">
+                  <p className="font-semibold">{item.category}</p>
+                  <p className="whitespace-pre-wrap">{item.description}</p>
+                  <a className="text-leaf underline" href={`https://www.google.com/maps?q=${item.location.latitude},${item.location.longitude}`}>
+                    {item.location.address || 'View reported location'}
+                  </a>
+                  {(item.imageUrls?.length ? item.imageUrls : [item.imageUrl]).filter(Boolean).map((url, index) => (
+                    <ComplaintPhoto key={index} url={url} alt={`Complaint photo ${index + 1}`} />
+                  ))}
+                </div>
+              </details>
+              <button type="button" className="mt-3 rounded-md border border-rose-200 px-2 py-1 text-sm font-semibold text-red-800 hover:bg-red-50 disabled:opacity-60" disabled={deletingId !== null || joining} onClick={() => void deleteComplaint(item)}>
+                {deletingId === item.id ? 'Deleting�' : 'Delete complaint'}
+              </button>
+            </article>
+  );
+
   return (
     <div className="grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
       <Card className="border-t-4 border-t-leaf">
@@ -154,43 +194,16 @@ const ProfilePage = () => {
         <div className="mt-3 space-y-2">
           {deleteFeedback && <p role="status" className="text-sm">{deleteFeedback}</p>}
           {detailsError && <button type="button" onClick={loadDetails}>Retry loading complaints</button>}
-          {complaints.map((item) => (
-            <article key={item.id} className="rounded-md border border-line bg-paper p-3">
-              <details>
-              <summary className="flex flex-wrap cursor-pointer list-none items-start justify-between gap-4 [&::-webkit-details-marker]:hidden">
-              <div>
-                <p className="font-medium text-ink">{item.title}</p>
-                <p className="text-xs text-muted">{new Date(item.createdAt).toLocaleString()}</p>
-                {item.status === 'Rejected' && item.rejectNote && (
-                  <p className="mt-1 text-xs font-medium text-rose-700">Rejected Reason: {item.rejectNote}</p>
-                )}
-                {item.status !== 'Rejected' && item.progressNote && (
-                  <p className="mt-1 text-xs font-medium text-leaf">Latest Update: {item.progressNote}</p>
-                )}
-              </div>
-              <span className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-                <Badge text={item.status} />
-                <span className="text-sm font-semibold rounded-md border border-line bg-white px-2 py-1 text-leaf">Issue details</span>
-              </span>
-              </summary>
-
-                <div className="mt-3 space-y-2 text-sm text-ink">
-                  <p className="font-semibold">{item.category}</p>
-                  <p className="whitespace-pre-wrap">{item.description}</p>
-                  <a className="text-leaf underline" href={`https://www.google.com/maps?q=${item.location.latitude},${item.location.longitude}`}>
-                    {item.location.address || 'View reported location'}
-                  </a>
-                  {(item.imageUrls?.length ? item.imageUrls : [item.imageUrl]).filter(Boolean).map((url, index) => (
-                    <ComplaintPhoto key={index} url={url} alt={`Complaint photo ${index + 1}`} />
-                  ))}
-                </div>
-              </details>
-              <button type="button" className="mt-3 rounded-md border border-rose-200 px-2 py-1 text-sm font-semibold text-red-800 hover:bg-red-50 disabled:opacity-60" disabled={deletingId !== null || joining} onClick={() => void deleteComplaint(item)}>
-                {deletingId === item.id ? 'Deleting�' : 'Delete complaint'}
-              </button>
-            </article>
-          ))}
-          {!detailsError && !complaints.length && <p className="text-sm text-muted">No activity yet.</p>}
+      {activeComplaints.map(renderComplaint)}
+          {!detailsError && !activeComplaints.length && <p className="text-sm text-muted">No activity yet.</p>}
+        </div>
+      </Card>
+      <Card className="md:col-start-2">
+        <h3 className="text-xl font-semibold">Rejected complaints</h3>
+        <div className="mt-3 space-y-2">
+          {rejectedComplaints.length ? rejectedComplaints.map(renderComplaint) : (
+            !detailsError && <p className="text-sm text-muted">No rejected complaints yet.</p>
+          )}
         </div>
       </Card>
       <Card className="md:col-start-2">
