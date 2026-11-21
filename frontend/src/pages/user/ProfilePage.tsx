@@ -3,10 +3,27 @@ import { useEffect, useState } from 'react';
 import { complaintApi, userApi } from '../../api/services';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
-import type { Complaint, ProfileActivity } from '../../types';
+import type { Complaint } from '../../types';
 
 const ProfilePage = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteFeedback, setDeleteFeedback] = useState('');
+  const deleteComplaint = async (id: string) => {
+    if (deletingId || !window.confirm('Permanently delete this complaint?')) return;
+    setDeletingId(id);
+    setDeleteFeedback('');
+    try {
+      await complaintApi.remove(id);
+      setComplaints((current) => current.filter((complaint) => complaint.id !== id));
+      setDeleteFeedback('Complaint deleted.');
+    } catch {
+      setDeleteFeedback('Could not delete the complaint. Please try again.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const [detailsError, setDetailsError] = useState(false);
   const loadDetails = () => {
     setDetailsError(false);
@@ -121,7 +138,9 @@ const ProfilePage = () => {
       <Card>
         <h3 className="text-xl font-semibold tracking-tight text-ink">Activity History</h3>
         <div className="mt-3 space-y-2">
-          {profile.activity.map((item: ProfileActivity) => (
+          {deleteFeedback && <p role="status" className="text-sm">{deleteFeedback}</p>}
+          {detailsError && <button type="button" onClick={loadDetails}>Retry loading complaints</button>}
+          {complaints.map((item) => (
             <details key={item.id} className="rounded-md border border-line bg-paper p-3">
               <summary className="flex flex-wrap cursor-pointer list-none items-start justify-between gap-4 [&::-webkit-details-marker]:hidden">
               <div>
@@ -139,22 +158,23 @@ const ProfilePage = () => {
                 <span className="text-sm font-semibold rounded-md border border-line bg-white px-2 py-1 text-leaf">Issue details</span>
               </span>
               </summary>
-              {complaints.filter((complaint) => complaint.id === item.id).map((complaint) => (
-                <div key={complaint.id} className="mt-3 space-y-2 text-sm text-ink">
-                  <p className="font-semibold">{complaint.category}</p>
-                  <p className="whitespace-pre-wrap">{complaint.description}</p>
-                  <a className="text-leaf underline" href={`https://www.google.com/maps?q=${complaint.location.latitude},${complaint.location.longitude}`}>
-                    {complaint.location.address || 'View reported location'}
+
+                <div className="mt-3 space-y-2 text-sm text-ink">
+                  <p className="font-semibold">{item.category}</p>
+                  <p className="whitespace-pre-wrap">{item.description}</p>
+                  <a className="text-leaf underline" href={`https://www.google.com/maps?q=${item.location.latitude},${item.location.longitude}`}>
+                    {item.location.address || 'View reported location'}
                   </a>
-                  {(complaint.imageUrls?.length ? complaint.imageUrls : [complaint.imageUrl]).filter(Boolean).map((url, index) => (
+                  {(item.imageUrls?.length ? item.imageUrls : [item.imageUrl]).filter(Boolean).map((url, index) => (
                     <ComplaintPhoto key={index} url={url} alt={`Complaint photo ${index + 1}`} />
                   ))}
                 </div>
-              ))}
-              {detailsError && <button type="button" onClick={loadDetails}>Retry loading details</button>}
+              <button type="button" className="mt-3 rounded-md px-2 py-1 text-sm font-semibold text-red-800 hover:bg-red-50 disabled:opacity-60" disabled={deletingId !== null || joining} onClick={() => void deleteComplaint(item.id)}>
+                {deletingId === item.id ? 'Deleting�' : 'Delete complaint'}
+              </button>
             </details>
           ))}
-          {!profile.activity.length && <p className="text-sm text-muted">No activity yet.</p>}
+          {!detailsError && !complaints.length && <p className="text-sm text-muted">No activity yet.</p>}
         </div>
       </Card>
     </div>

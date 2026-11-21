@@ -152,7 +152,28 @@ const getMyComplaints = asyncHandler(async (req, res, next) => {
   });
 });
 
+const deleteComplaint = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(id)) {
+    return next(new ApiError(400, 'Invalid complaint ID'));
+  }
+
+  const { data, error } = await supabase
+    .from('complaints')
+    .delete()
+    .eq('id', id)
+    .eq('created_by', req.user.id)
+    .select('id')
+    .maybeSingle();
+
+  if (error) return next(new ApiError(500, 'Could not delete complaint'));
+  if (!data) return next(new ApiError(404, 'Complaint not found'));
+
+  return res.status(204).end();
+});
+
 module.exports = {
+  deleteComplaint,
   createComplaint,
   getPublicComplaints,
   getMyComplaints,
