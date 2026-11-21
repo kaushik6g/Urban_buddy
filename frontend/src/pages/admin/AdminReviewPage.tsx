@@ -110,10 +110,10 @@ const AdminReviewPage = () => {
     });
   };
 
-  return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-semibold tracking-tight">Complaint review</h2>
-      {items.map((item) => (
+  const activeComplaints = items.filter((item) => item.status !== 'Rejected');
+  const rejectedComplaints = items.filter((item) => item.status === 'Rejected');
+
+  const renderComplaint = (item: (typeof items)[number]) => (
         <Card key={item.id}>
           <button
             className="w-full text-left"
@@ -361,12 +361,26 @@ const AdminReviewPage = () => {
             </>
           )}
         </Card>
-      ))}
-      {!items.length && (
+  );
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-2xl font-semibold tracking-tight">Complaint review</h2>
+      {activeComplaints.map(renderComplaint)}
+      {!activeComplaints.length && (
         <Card>
           No complaints available.
         </Card>
       )}
+
+      <details className="rounded-xl border border-line bg-white p-4">
+        <summary className="cursor-pointer font-semibold">Rejected complaints ({rejectedComplaints.length})</summary>
+        <div className="mt-4 space-y-4">
+          {rejectedComplaints.length ? rejectedComplaints.map(renderComplaint) : (
+            <p className="text-sm text-muted">No rejected complaints yet.</p>
+          )}
+        </div>
+      </details>
 
       {lightbox && (() => {
         const complaint = items.find((entry) => entry.id === lightbox.complaintId);
