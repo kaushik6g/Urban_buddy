@@ -104,8 +104,9 @@ const AdminReviewPage = () => {
 
   return (
     <div className="space-y-4">
+      <h2 className="text-2xl font-semibold tracking-tight">Complaint review</h2>
       {items.map((item) => (
-        <Card className="border-slate-700 bg-gradient-to-b from-slate-900 to-slate-950 text-slate-100" key={item.id}>
+        <Card key={item.id}>
           <button
             className="w-full text-left"
             onClick={() => {
@@ -119,28 +120,28 @@ const AdminReviewPage = () => {
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h3 className="text-xl font-black tracking-tight text-white">{item.title}</h3>
-                <p className="text-sm text-slate-300">
+                <h3 className="text-xl font-semibold tracking-tight text-ink">{item.title}</h3>
+                <p className="text-sm text-muted">
                   {item.createdByUser?.name} ({item.createdByUser?.email})
                 </p>
-                <p className="mt-1 inline-flex rounded-full border border-cyan-900/40 bg-cyan-950/40 px-2 py-0.5 text-xs font-semibold tracking-wide text-cyan-300">
+                <p className="mt-1 inline-flex rounded-full border border-line bg-paper px-2 py-0.5 text-xs font-semibold tracking-wide text-leaf">
                   {item.category}
                 </p>
               </div>
               <div className="text-right">
                 <Badge text={item.status} />
-                <p className="mt-2 text-xs text-slate-400">{activeId === item.id ? 'Hide details' : 'Click to view details'}</p>
+                <p className="mt-2 text-xs text-muted">{activeId === item.id ? 'Hide details' : 'Click to view details'}</p>
               </div>
             </div>
           </button>
 
           {activeId === item.id && (
             <>
-              <p className="mt-3 text-sm leading-relaxed text-slate-300">{item.description}</p>
+              <p className="mt-3 text-sm leading-relaxed text-muted">{item.description}</p>
 
               <div className="mt-4 grid gap-3 xl:grid-cols-[1.1fr_1fr]">
-                <div className="rounded-xl border border-slate-700 bg-slate-950 p-2">
-                  <p className="mb-2 px-1 text-xs uppercase tracking-wide text-slate-400">Photos</p>
+                <div className="rounded-md border border-line bg-paper p-2">
+                  <p className="mb-2 px-1 text-xs uppercase tracking-wide text-muted">Photos</p>
                   {photoList(item).length > 0 ? (
                     <>
                       {(() => {
@@ -154,7 +155,7 @@ const AdminReviewPage = () => {
 
                         return (
                           <>
-                            <div className="overflow-hidden rounded-xl border border-slate-700 bg-slate-900">
+                            <div className="overflow-hidden rounded-md border border-line bg-paper">
                               {!selectedFailed ? (
                                 <button
                                   className="block h-64 w-full bg-black sm:h-72"
@@ -174,10 +175,10 @@ const AdminReviewPage = () => {
                                   />
                                 </button>
                               ) : (
-                                <div className="flex h-64 flex-col items-center justify-center gap-2 text-sm text-slate-500 sm:h-72">
+                                <div className="flex h-64 flex-col items-center justify-center gap-2 text-sm text-muted sm:h-72">
                                   <p>Selected photo unavailable</p>
                                   <a
-                                    className="text-cyan-300 hover:text-cyan-200"
+                                    className="text-leaf hover:text-leaf"
                                     href={resolveImageUrl(selectedUrl)}
                                     rel="noreferrer"
                                     target="_blank"
@@ -193,7 +194,7 @@ const AdminReviewPage = () => {
                                 {photoList(item).map((photoUrl, index) => (
                                   <button
                                     className={`shrink-0 overflow-hidden rounded-lg border ${
-                                      index === selected ? 'border-cyan-400' : 'border-slate-700'
+                                      index === selected ? 'border-leaf' : 'border-line'
                                     }`}
                                     key={`${item.id}-thumb-${index}`}
                                     onClick={() =>
@@ -218,20 +219,20 @@ const AdminReviewPage = () => {
                       })()}
                     </>
                   ) : (
-                    <div className="flex h-28 items-center justify-center text-sm text-slate-500">No photos uploaded</div>
+                    <div className="flex h-28 items-center justify-center text-sm text-muted">No photos uploaded</div>
                   )}
                 </div>
 
-                <div className="rounded-xl border border-slate-700 bg-slate-950 p-3">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Location</p>
-                  <p className="mt-1 text-sm text-slate-200">{item.location.address || 'Address not provided'}</p>
-                  <p className="mt-1 text-xs text-slate-400">
+                <div className="rounded-md border border-line bg-paper p-3">
+                  <p className="text-xs uppercase tracking-wide text-muted">Location</p>
+                  <p className="mt-1 text-sm text-ink">{item.location.address || 'Address not provided'}</p>
+                  <p className="mt-1 text-xs text-muted">
                     Lat: {item.location.latitude} | Lng: {item.location.longitude}
                   </p>
 
                   {!mapErrorById[item.id] ? (
                     <iframe
-                      className="mt-3 h-64 w-full rounded-lg border border-slate-700 sm:h-72"
+                      className="mt-3 h-64 w-full rounded-lg border border-line sm:h-72"
                       loading="lazy"
                       referrerPolicy="no-referrer-when-downgrade"
                       src={`https://maps.google.com/maps?q=${item.location.latitude},${item.location.longitude}&z=15&output=embed`}
@@ -245,7 +246,7 @@ const AdminReviewPage = () => {
                     />
                   ) : (
                     <a
-                      className="mt-3 inline-block text-sm font-semibold text-cyan-300 hover:text-cyan-200"
+                      className="mt-3 inline-block text-sm font-semibold text-leaf hover:text-leaf"
                       href={`https://www.google.com/maps?q=${item.location.latitude},${item.location.longitude}`}
                       rel="noreferrer"
                       target="_blank"
@@ -258,14 +259,14 @@ const AdminReviewPage = () => {
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {item.status === 'Pending' && (
-                  <div className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-400">Decision</p>
-                    <p className="mt-1 text-sm text-slate-300">Choose whether to accept or reject this issue first.</p>
+                  <div className="w-full rounded-md border border-line bg-paper p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted">Decision</p>
+                    <p className="mt-1 text-sm text-muted">Choose whether to accept or reject this issue first.</p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Button className="rounded-xl" variant="secondary" onClick={() => approve(item.id)}>
+                      <Button className="rounded-md" variant="secondary" onClick={() => approve(item.id)}>
                         Accept Issue
                       </Button>
-                      <Button className="rounded-xl" variant="danger" onClick={() => reject(item.id)}>
+                      <Button className="rounded-md" variant="danger" onClick={() => reject(item.id)}>
                         Reject Issue
                       </Button>
                     </div>
@@ -276,7 +277,7 @@ const AdminReviewPage = () => {
               {item.status === 'Pending' && (
                 <>
                   <input
-                    className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500"
+                    className="mt-3 w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-muted"
                     placeholder="Reject note (mandatory)"
                     value={noteById[item.id] || ''}
                     onChange={(e) => {
@@ -291,20 +292,20 @@ const AdminReviewPage = () => {
                     }}
                   />
                   {!!noteErrorById[item.id] && (
-                    <p className="mt-1 text-xs font-semibold text-rose-400">{noteErrorById[item.id]}</p>
+                    <p className="mt-1 text-xs font-semibold text-red-800">{noteErrorById[item.id]}</p>
                   )}
                 </>
               )}
 
               {item.status !== 'Pending' && item.status !== 'Rejected' && (
-                <div className="mt-4 rounded-xl border border-slate-700 bg-slate-950 p-3">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Update Status</p>
-                  <p className="mt-1 text-sm text-slate-300">
+                <div className="mt-4 rounded-md border border-line bg-paper p-3">
+                  <p className="text-xs uppercase tracking-wide text-muted">Update Status</p>
+                  <p className="mt-1 text-sm text-muted">
                     Share a clear status and optional update comment for the user.
                   </p>
                   <div className="mt-3 grid gap-2 sm:grid-cols-[220px_1fr]">
                     <select
-                      className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200"
+                      className="rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink"
                       value={statusById[item.id] || item.status}
                       onChange={(e) =>
                         setStatusById((prev) => ({
@@ -320,7 +321,7 @@ const AdminReviewPage = () => {
                       ))}
                     </select>
                     <input
-                      className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500"
+                      className="rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-muted"
                       placeholder="Add update comment (for example: Team assigned, work starts tomorrow)"
                       value={updateNoteById[item.id] || ''}
                       onChange={(e) =>
@@ -332,12 +333,12 @@ const AdminReviewPage = () => {
                     />
                   </div>
                   <div className="mt-3">
-                    <Button className="rounded-xl" variant="secondary" onClick={() => updateStatus(item.id)}>
+                    <Button className="rounded-md" variant="secondary" onClick={() => updateStatus(item.id)}>
                       Save Update
                     </Button>
                   </div>
                   {item.progressNote && (
-                    <p className="mt-3 rounded-lg border border-cyan-900/40 bg-cyan-950/40 px-3 py-2 text-sm text-cyan-200">
+                    <p className="mt-3 rounded-lg border border-line bg-paper px-3 py-2 text-sm text-leaf">
                       Latest update: {item.progressNote}
                     </p>
                   )}
@@ -345,7 +346,7 @@ const AdminReviewPage = () => {
               )}
 
               {item.status === 'Rejected' && item.rejectNote && (
-                <div className="mt-4 rounded-xl border border-rose-900/50 bg-rose-950/30 p-3 text-sm text-rose-200">
+                <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
                   <span className="font-semibold">Reject Note:</span> {item.rejectNote}
                 </div>
               )}
@@ -354,7 +355,7 @@ const AdminReviewPage = () => {
         </Card>
       ))}
       {!items.length && (
-        <Card className="border-slate-700 bg-gradient-to-b from-slate-900 to-slate-950 text-slate-300">
+        <Card>
           No complaints available.
         </Card>
       )}
@@ -368,9 +369,9 @@ const AdminReviewPage = () => {
         const currentUrl = resolveImageUrl(photos[safeIndex]);
 
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-4" onClick={() => setLightbox(null)}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4" onClick={() => setLightbox(null)}>
             <div className="relative w-full max-w-6xl" onClick={(event) => event.stopPropagation()}>
-              <img alt="Complaint preview" className="max-h-[82vh] w-full rounded-xl object-contain" src={currentUrl} />
+              <img alt="Complaint preview" className="max-h-[82vh] w-full rounded-md object-contain" src={currentUrl} />
               <button
                 className="absolute right-3 top-3 rounded-md bg-black/60 px-3 py-1.5 text-sm font-semibold text-white hover:bg-black/80"
                 onClick={() => setLightbox(null)}

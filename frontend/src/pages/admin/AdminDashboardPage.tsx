@@ -52,42 +52,41 @@ const AdminDashboardPage = () => {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-3xl font-black tracking-tight text-white">Admin Dashboard</h2>
-        <p className="mt-1 text-sm text-slate-400">Operational snapshot, complaint activity, and community management.</p>
+        <h2 className="text-3xl font-semibold tracking-tight text-ink">Admin Dashboard</h2>
       </div>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <Card className="border-slate-700 bg-gradient-to-b from-slate-900 to-slate-950 text-slate-100 shadow-lg shadow-cyan-950/10">
-          <p className="text-sm text-slate-300">Total</p>
-          <p className="mt-2 text-3xl font-black text-white">{stats.total}</p>
-        </Card>
-        <Card className="border-slate-700 bg-gradient-to-b from-slate-900 to-slate-950 text-slate-100 shadow-lg shadow-cyan-950/10">
-          <p className="text-sm text-slate-300">Pending</p>
-          <p className="mt-2 text-3xl font-black text-amber-400">{stats.pending}</p>
-        </Card>
-        <Card className="border-slate-700 bg-gradient-to-b from-slate-900 to-slate-950 text-slate-100 shadow-lg shadow-cyan-950/10">
-          <p className="text-sm text-slate-300">Approved</p>
-          <p className="mt-2 text-3xl font-black text-emerald-400">{stats.approved}</p>
-        </Card>
-        <Card className="border-slate-700 bg-gradient-to-b from-slate-900 to-slate-950 text-slate-100 shadow-lg shadow-cyan-950/10">
-          <p className="text-sm text-slate-300">In Progress</p>
-          <p className="mt-2 text-3xl font-black text-sky-400">{stats.inProgress}</p>
-        </Card>
-        <Card className="border-slate-700 bg-gradient-to-b from-slate-900 to-slate-950 text-slate-100 shadow-lg shadow-cyan-950/10">
-          <p className="text-sm text-slate-300">Resolved</p>
-          <p className="mt-2 text-3xl font-black text-violet-400">{stats.resolved}</p>
-        </Card>
+      <section aria-label="Summary" className="metric-strip">
+        <div>
+          <p className="text-sm text-muted">Total</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{stats.total}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted">Pending</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{stats.pending}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted">Approved</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{stats.approved}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted">In Progress</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{stats.inProgress}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted">Resolved</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{stats.resolved}</p>
+        </div>
       </section>
 
-      <Card className="border-slate-700 bg-gradient-to-b from-slate-900 to-slate-950 text-slate-100">
-        <h3 className="text-lg font-bold text-white">Latest Complaints</h3>
+      <Card>
+        <h3 className="text-lg font-bold text-ink">Latest Complaints</h3>
         <div className="mt-3 space-y-3">
           {complaints.slice(0, 8).map((item) => (
             <div
-              className="grid gap-3 rounded-xl border border-slate-800 bg-slate-950/80 p-3 text-sm transition hover:border-slate-700 md:grid-cols-[72px_1fr_auto]"
+              className="grid gap-3 border-t border-line py-3 text-sm transition hover:border-line md:grid-cols-[72px_1fr_auto]"
               key={item.id}
             >
-              <div className="overflow-hidden rounded-md border border-slate-700 bg-slate-900">
+              <div className="overflow-hidden rounded-md border border-line bg-paper">
                 {primaryImage(item) ? (
                   <img
                     alt={item.title}
@@ -95,42 +94,42 @@ const AdminDashboardPage = () => {
                     src={resolveImageUrl(primaryImage(item))}
                   />
                 ) : (
-                  <div className="flex h-[72px] w-[72px] items-center justify-center text-[10px] text-slate-500">
+                  <div className="flex h-[72px] w-[72px] items-center justify-center text-[10px] text-muted">
                     No Photo
                   </div>
                 )}
               </div>
 
               <div>
-                <p className="font-semibold text-white">{item.title}</p>
-                <p className="mt-1 text-xs font-medium tracking-wide text-cyan-300/90">{item.category}</p>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="font-semibold text-ink">{item.title}</p>
+                <p className="mt-1 text-xs font-medium tracking-wide text-leaf">{item.category}</p>
+                <p className="mt-1 text-xs text-muted">
                   {item.location?.address || `Lat ${item.location?.latitude}, Lng ${item.location?.longitude}`}
                 </p>
               </div>
 
-              <p className="self-start rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-200">{item.status}</p>
+              <p className="self-start rounded-full bg-paper px-2 py-1 text-xs text-ink">{item.status}</p>
             </div>
           ))}
-          {!complaints.length && <p className="text-sm text-slate-400">No complaints yet.</p>}
+          {!complaints.length && <p className="text-sm text-muted">No complaints yet.</p>}
         </div>
       </Card>
 
-      <Card className="border-slate-700 bg-gradient-to-b from-slate-900 to-slate-950 text-slate-100">
-        <h3 className="text-lg font-bold text-white">Community Invite Code</h3>
-        <p className="mt-1 text-sm text-slate-400">
+      <Card>
+        <h3 className="text-lg font-bold text-ink">Community Invite Code</h3>
+        <p className="mt-1 text-sm text-muted">
           Share this code with users so they can join your community.
         </p>
 
         <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
           <input
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500"
+            className="rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-muted"
             placeholder="Community name"
             value={communityName}
             onChange={(e) => setCommunityName(e.target.value)}
           />
           <button
-            className="rounded-xl bg-gradient-to-r from-cyan-400 to-sky-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:brightness-110"
+            className="rounded-md bg-leaf px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
             onClick={generateCode}
             type="button"
           >
@@ -138,13 +137,13 @@ const AdminDashboardPage = () => {
           </button>
         </div>
 
-        <p className="mt-3 text-sm text-slate-200">
+        <p className="mt-3 text-sm text-ink">
           Current Code:{' '}
-          <span className="rounded border border-slate-700 bg-slate-950 px-2 py-1 font-mono text-cyan-300">
+          <span className="rounded border border-line bg-paper px-2 py-1 font-mono text-leaf">
             {community?.code || 'Not generated yet'}
           </span>
         </p>
-        {communityMessage && <p className="mt-2 text-sm text-emerald-400">{communityMessage}</p>}
+        {communityMessage && <p className="mt-2 text-sm text-ink">{communityMessage}</p>}
       </Card>
     </div>
   );
