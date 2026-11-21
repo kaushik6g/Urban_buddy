@@ -10,8 +10,6 @@ const LoginPage = () => {
   const { login, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [adminLogin, setAdminLogin] = useState(false);
-  const [communityCode, setCommunityCode] = useState('');
   const [error, setError] = useState('');
 
   const onSubmit = async (event: React.FormEvent) => {
@@ -19,7 +17,7 @@ const LoginPage = () => {
     setError('');
 
     try {
-      const loggedInUser = await login(email, password, adminLogin ? undefined : communityCode.trim().toUpperCase());
+      const loggedInUser = await login(email, password);
       navigate(loggedInUser.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Login failed. Please try again.');
@@ -48,20 +46,12 @@ const LoginPage = () => {
             required
           />
 
-          {!adminLogin && (
-            <Input aria-label="Community code" placeholder="Community code" value={communityCode}
-              onChange={(e) => setCommunityCode(e.target.value.toUpperCase())} required />
-          )}
 
           {error && <p className="text-sm text-rose-600">{error}</p>}
 
           <Button className="w-full" disabled={loading} type="submit">
             {loading ? 'Signing in...' : 'Sign in'}
           </Button>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={adminLogin} onChange={(e) => setAdminLogin(e.target.checked)} />
-            Sign in as an admin
-          </label>
         </form>
 
         <p className="mt-4 text-center text-sm text-slate-600">
