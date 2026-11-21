@@ -15,7 +15,7 @@ export const authApi = {
 
 export const userApi = {
   profile: () => api.get('/users/profile'),
-  leaderboard: () => api.get('/users/leaderboard'),
+  leaderboard: () => api.get('/api/leaderboard', { baseURL: '/' }),
   joinCommunity: (code: string) => api.post('/users/join-community', { code }),
 };
 
