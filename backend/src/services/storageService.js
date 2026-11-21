@@ -5,6 +5,16 @@ const { cloudinary, hasCloudinaryConfig } = require('../config/cloudinary');
 const uploadImage = async (file) => {
   if (!file) return '';
 
+  if (file.buffer) {
+    const supabase = require('../config/supabase');
+    const { randomUUID } = require('node:crypto');
+    const bucket = supabase.storage.from('complaint-images');
+    const objectPath = randomUUID() + path.extname(file.originalname).toLowerCase();
+    const { error } = await bucket.upload(objectPath, file.buffer, { contentType: file.mimetype });
+    if (error) throw error;
+    return bucket.getPublicUrl(objectPath).data.publicUrl;
+  }
+
   if (hasCloudinaryConfig) {
     const result = await cloudinary.uploader.upload(file.path, {
       folder: 'urbanbuddy/complaints',
