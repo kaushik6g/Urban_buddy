@@ -1,16 +1,19 @@
 const supabase = require('../config/supabase');
 const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/apiError');
-const { uploadImages } = require('../services/storageService');
+const { uploadImages, signedPhoto } = require('../services/storageService');
 
 const PUBLIC_STATUSES = ['Approved', 'In Progress', 'Resolved'];
 
-const mapComplaint = (item) => ({
+const mapComplaint = async (item) => {
+  const paths = item.image_urls?.length ? item.image_urls : [item.image_url].filter(Boolean);
+  const photos = await Promise.all(paths.map(signedPhoto));
+  return {
   id: item.id,
   title: item.title,
   description: item.description,
-  imageUrl: item.image_url,
-  imageUrls: Array.isArray(item.image_urls) ? item.image_urls : item.image_url ? [item.image_url] : [],
+  imageUrl: photos[0] || null,
+  imageUrls: photos.filter(Boolean),
   rejectNote: item.admin_note || '',
   progressNote: item.progress_note || '',
   category: item.category,
@@ -23,7 +26,8 @@ const mapComplaint = (item) => ({
   createdBy: item.created_by,
   createdAt: item.created_at,
   updatedAt: item.updated_at,
-});
+  };
+};
 
 const createComplaint = asyncHandler(async (req, res, next) => {
   const { title, description, category, latitude, longitude, address } = req.body;
@@ -78,7 +82,7 @@ const createComplaint = asyncHandler(async (req, res, next) => {
   return res.status(201).json({
     success: true,
     message: 'Complaint submitted and awaiting review',
-    data: mapComplaint(data),
+    data: await mapComplaint(data),
   });
 });
 
@@ -125,7 +129,7 @@ const getPublicComplaints = asyncHandler(async (req, res, next) => {
 
   return res.status(200).json({
     success: true,
-    data: data.map(mapComplaint),
+    data: await Promise.all(data.map(mapComplaint)),
     pagination: {
       page,
       limit,
@@ -148,7 +152,7 @@ const getMyComplaints = asyncHandler(async (req, res, next) => {
 
   return res.status(200).json({
     success: true,
-    data: data.map(mapComplaint),
+    data: await Promise.all(data.map(mapComplaint)),
   });
 });
 

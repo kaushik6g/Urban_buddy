@@ -19,15 +19,15 @@ const getAllComplaints = asyncHandler(async (_req, res, next) => {
 
   return res.status(200).json({
     success: true,
-    data: data.map((item) => ({
-      ...mapComplaint(item),
+    data: await Promise.all(data.map(async (item) => ({
+      ...await mapComplaint(item),
       createdByUser: item.users
         ? {
             name: item.users.name,
             email: item.users.email,
           }
         : null,
-    })),
+    }))),
   });
 });
 
@@ -91,7 +91,7 @@ const approveComplaint = asyncHandler(async (req, res, next) => {
   return res.status(200).json({
     success: true,
     message: `Complaint approved. ${APPROVAL_POINTS} points awarded.`,
-    data: mapComplaint(updated),
+    data: await mapComplaint(updated),
   });
 });
 
@@ -135,7 +135,7 @@ const rejectComplaint = asyncHandler(async (req, res, next) => {
   return res.status(200).json({
     success: true,
     message: 'Complaint rejected',
-    data: mapComplaint(data),
+    data: await mapComplaint(data),
   });
 });
 
@@ -185,7 +185,7 @@ const updateComplaintStatus = asyncHandler(async (req, res, next) => {
   return res.status(200).json({
     success: true,
     message: 'Complaint status updated',
-    data: mapComplaint(data),
+    data: await mapComplaint(data),
   });
 });
 

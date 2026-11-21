@@ -1,6 +1,5 @@
 const path = require('path');
 const { tmpdir } = require('node:os');
-const { hasCloudinaryConfig } = require('../config/cloudinary');
 const fs = require('fs');
 const multer = require('multer');
 const { randomUUID: uuid } = require('node:crypto');
@@ -18,9 +17,6 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    if (process.env.VERCEL && !hasCloudinaryConfig) {
-      return cb(new ApiError(503, 'Photo storage is unavailable'));
-    }
     return cb(null, UPLOADS_DIR);
   },
   filename: (_req, file, cb) => {
