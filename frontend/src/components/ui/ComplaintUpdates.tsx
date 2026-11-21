@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react';
 import api from '../../api/client';
 import Card from './Card';
-import Badge from './Badge';
 
 interface Update { id: number; title: string; status: string; note: string; points_change: number; created_at: string }
+const statusMessages: Record<string, string> = {
+  Approved: 'was approved',
+  Rejected: 'was rejected',
+  'In Progress': 'is in progress',
+  Resolved: 'was resolved',
+  Deleted: 'was deleted',
+};
+
 export default function ComplaintUpdates() {
   const [items, setItems] = useState<Update[]>([]);
   const [message, setMessage] = useState('Loading updates...');
@@ -18,15 +25,17 @@ export default function ComplaintUpdates() {
         <ul className="mt-3 divide-y divide-line">
           {items.map((item) => (
             <li key={item.id} className="space-y-1 py-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <strong>{item.title}</strong>
-                <Badge text={item.status} />
-              </div>
+              <p>
+                {item.points_change !== 0 && (
+                  <><strong>{item.points_change > 0 ? '+' : ''}{item.points_change} points</strong> when </>
+                )}
+                {item.points_change === 0 ? 'Complaint' : 'complaint'} <strong>&ldquo;{item.title}&rdquo;</strong>{' '}
+                {statusMessages[item.status] ?? 'was updated'}.
+              </p>
               {item.note && <p className="text-sm">{item.note}</p>}
-              <div className="flex flex-wrap gap-x-4 text-sm text-muted">
-                <span>{item.points_change > 0 ? '+' : ''}{item.points_change} points</span>
-                <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleString()}</time>
-              </div>
+              <p className="text-sm text-muted">
+                Updated on <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleString()}</time>
+              </p>
             </li>
           ))}
         </ul>
