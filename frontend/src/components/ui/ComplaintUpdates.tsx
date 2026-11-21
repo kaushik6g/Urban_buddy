@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../../api/client';
 import Card from './Card';
 
-interface Update { id: number; title: string; status: string; note: string; points_change: number; created_at: string }
+interface Update { id: number; complaint_id: string; title: string; status: string; note: string; points_change: number; created_at: string }
 const statusMessages: Record<string, string> = {
   Approved: 'was approved',
   Rejected: 'was rejected',
@@ -11,6 +11,22 @@ const statusMessages: Record<string, string> = {
   Deleted: 'was deleted',
 };
 
+const workflowOrder = ['Pending', 'Approved', 'In Progress', 'Resolved'];
+
+function identifyBackwardUpdates(items: Update[]) {
+  const previousStatusByComplaint = new Map<string, string>();
+  const backward = new Set<number>();
+  for (const item of [...items].reverse()) {
+    const previous = previousStatusByComplaint.get(item.complaint_id);
+    const currentRank = workflowOrder.indexOf(item.status);
+    if (previous && currentRank >= 0 && currentRank < workflowOrder.indexOf(previous)) {
+      backward.add(item.id);
+    }
+    previousStatusByComplaint.set(item.complaint_id, item.status);
+  }
+  return backward;
+}
+
 export default function ComplaintUpdates() {
   const [items, setItems] = useState<Update[]>([]);
   const [message, setMessage] = useState('Loading updates...');
@@ -18,6 +34,7 @@ export default function ComplaintUpdates() {
     api.get('/users/updates').then(({ data }) => { setItems(data.data); setMessage('No updates yet.'); })
       .catch(() => setMessage('Could not load updates.'));
   }, []);
+  const backwardUpdates = identifyBackwardUpdates(items);
   return (
     <Card>
       <h2 className="text-lg font-semibold">Updates</h2>
@@ -26,7 +43,7 @@ export default function ComplaintUpdates() {
           {items.map((item) => (
             <li key={item.id} className="space-y-1 py-3">
               <p>
-                Your report <strong>&ldquo;{item.title}&rdquo;</strong> {statusMessages[item.status] ?? 'was updated'}.
+                Your report <strong>&ldquo;{item.title}&rdquo;</strong> {statusMessages[item.status] ?? 'was updated'}{backwardUpdates.has(item.id) && ' again'}.
                 {item.points_change > 0 && ` You earned ${item.points_change} points.`}
                 {item.points_change < 0 && ` The ${Math.abs(item.points_change)} points you earned for it were removed.`}
               </p>

@@ -44,7 +44,7 @@ router.put(
 router.put(
   '/complaints/:id/status',
   [
-    body('status').isIn(['Approved', 'In Progress', 'Resolved']).withMessage('Invalid status'),
+    body('status').isIn(['Approved', 'In Progress', 'Resolved', 'Rejected']).withMessage('Invalid status'),
     body('progressNote').isString().bail().trim().notEmpty().withMessage('A status comment is required').bail().isLength({ max: 500 }).withMessage('Progress note too long'),
     validate,
   ],

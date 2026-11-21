@@ -5,7 +5,7 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import type { Complaint } from '../../types';
 
-const statusOptions = ['Approved', 'In Progress', 'Resolved'];
+const statusOptions = ['Approved', 'In Progress', 'Resolved', 'Rejected'];
 const assetBase = import.meta.env.DEV ? import.meta.env.VITE_API_ASSET_URL || 'http://localhost:5000' : '';
 
 const resolveImageUrl = (imageUrl?: string) => {

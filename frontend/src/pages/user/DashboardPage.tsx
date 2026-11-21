@@ -50,7 +50,7 @@ const DashboardPage = () => {
   }, [user?.id]);
 
   const stats = useMemo(() => {
-    const total = myComplaints.length;
+    const total = myComplaints.filter((item) => item.status !== 'Rejected').length;
     const resolved = myComplaints.filter((c) => c.status === 'Resolved').length;
     const inProgress = myComplaints.filter((c) => c.status === 'In Progress').length;
     return { total, resolved, inProgress };
@@ -68,7 +68,7 @@ const DashboardPage = () => {
           <p className="mt-2 text-3xl font-semibold tabular-nums">{points}</p>
         </div>
         <div>
-          <p className="text-sm text-muted">Complaints Submitted</p>
+          <p className="text-sm text-muted">Total Complaints</p>
           <p className="mt-2 text-3xl font-semibold tabular-nums">{complaintsLoading ? '—' : stats.total}</p>
         </div>
         {['Approved', 'Rejected'].map((status) => (

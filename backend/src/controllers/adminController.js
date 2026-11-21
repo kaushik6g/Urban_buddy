@@ -5,7 +5,7 @@ const { APPROVAL_POINTS } = require('../utils/points');
 const { mapComplaint } = require('./complaintController');
 const { generateUniqueCommunityCode } = require('../utils/community');
 
-const ADMIN_ALLOWED_STATUS = ['Approved', 'In Progress', 'Resolved'];
+const ADMIN_ALLOWED_STATUS = ['Approved', 'In Progress', 'Resolved', 'Rejected'];
 
 const getAllComplaints = asyncHandler(async (_req, res, next) => {
   const { data, error } = await supabase
@@ -118,6 +118,8 @@ const updateComplaintStatus = asyncHandler(async (req, res, next) => {
   const { status } = req.body;
   const progressNote = String(req.body.progressNote || '').trim();
 
+  if (!progressNote) return next(new ApiError(400, 'A status comment is required'));
+
   if (!ADMIN_ALLOWED_STATUS.includes(status)) {
     return next(new ApiError(400, 'Invalid status value'));
   }
@@ -143,6 +145,7 @@ const updateComplaintStatus = asyncHandler(async (req, res, next) => {
 
   if (progressNote) {
     updatePayload.progress_note = progressNote;
+    if (status === 'Rejected') updatePayload.admin_note = progressNote;
   }
 
   const { data, error } = await supabase

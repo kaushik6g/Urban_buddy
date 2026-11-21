@@ -37,7 +37,8 @@ const AdminDashboardPage = () => {
     const approved = complaints.filter((c) => c.status === 'Approved').length;
     const inProgress = complaints.filter((c) => c.status === 'In Progress').length;
     const resolved = complaints.filter((c) => c.status === 'Resolved').length;
-    return { total: complaints.length, pending, approved, inProgress, resolved };
+    const rejected = complaints.filter((c) => c.status === 'Rejected').length;
+    return { total: complaints.length - rejected, pending, approved, inProgress, resolved, rejected };
   }, [complaints]);
 
   return (
@@ -48,7 +49,7 @@ const AdminDashboardPage = () => {
 
       <section aria-label="Summary" className="metric-strip">
         <div>
-          <p className="text-sm text-muted">Total</p>
+          <p className="text-sm text-muted">Total Complaints</p>
           <p className="mt-2 text-3xl font-semibold tabular-nums">{stats.total}</p>
         </div>
         <div>
@@ -66,6 +67,10 @@ const AdminDashboardPage = () => {
         <div>
           <p className="text-sm text-muted">Resolved</p>
           <p className="mt-2 text-3xl font-semibold tabular-nums">{stats.resolved}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted">Rejected</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{stats.rejected}</p>
         </div>
       </section>
 
