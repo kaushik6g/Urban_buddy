@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react';
-import { userApi } from '../../api/services';
+import { complaintApi, userApi } from '../../api/services';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
-import type { ProfileActivity } from '../../types';
+import type { Complaint, ProfileActivity } from '../../types';
 
 const ProfilePage = () => {
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [detailsError, setDetailsError] = useState(false);
+  const loadDetails = () => {
+    setDetailsError(false);
+    complaintApi.my().then(({ data }) => setComplaints(data.data)).catch(() => setDetailsError(true));
+  };
   const [profile, setProfile] = useState<any>(null);
   const [joinCode, setJoinCode] = useState('');
   const [joinMessage, setJoinMessage] = useState('');
@@ -19,6 +25,7 @@ const ProfilePage = () => {
 
   useEffect(() => {
     loadProfile();
+    loadDetails();
   }, []);
 
   const onJoinCommunity = async (event: React.FormEvent) => {
@@ -91,7 +98,8 @@ const ProfilePage = () => {
         <h3 className="text-xl font-black tracking-tight text-slate-900">Activity History</h3>
         <div className="mt-3 space-y-2">
           {profile.activity.map((item: ProfileActivity) => (
-            <div key={item.id} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+            <details key={item.id} className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+              <summary className="cursor-pointer">
               <div>
                 <p className="font-medium text-slate-800">{item.title}</p>
                 <p className="text-xs text-slate-500">{new Date(item.createdAt).toLocaleString()}</p>
@@ -103,7 +111,22 @@ const ProfilePage = () => {
                 )}
               </div>
               <Badge text={item.status} />
-            </div>
+              </summary>
+              {complaints.filter((complaint) => complaint.id === item.id).map((complaint) => (
+                <div key={complaint.id} className="mt-3 space-y-2 text-sm text-slate-700">
+                  <p className="font-semibold">{complaint.category}</p>
+                  <p className="whitespace-pre-wrap">{complaint.description}</p>
+                  <a className="text-sky-700 underline" href={`https://www.google.com/maps?q=${complaint.location.latitude},${complaint.location.longitude}`}>
+                    {complaint.location.address || 'View reported location'}
+                  </a>
+                  {(complaint.imageUrls?.length ? complaint.imageUrls : [complaint.imageUrl]).filter(Boolean).map((url, index) => (
+                    <img key={index} className="max-h-64 rounded-lg object-contain" alt={`Complaint photo ${index + 1}`}
+                      src={url!.startsWith('/') ? `${import.meta.env.VITE_API_ASSET_URL || 'http://localhost:5000'}${url}` : url!} />
+                  ))}
+                </div>
+              ))}
+              {detailsError && <button type="button" onClick={loadDetails}>Retry loading details</button>}
+            </details>
           ))}
           {!profile.activity.length && <p className="text-sm text-slate-500">No activity yet.</p>}
         </div>
