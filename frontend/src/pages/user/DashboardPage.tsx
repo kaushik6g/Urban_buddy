@@ -10,18 +10,34 @@ const DashboardPage = () => {
   const [myComplaints, setMyComplaints] = useState<Complaint[]>([]);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
-  useEffect(() => {
-    const load = async () => {
-      const [myRes, leaderRes] = await Promise.all([complaintApi.my(), userApi.leaderboard()]);
-      setMyComplaints(myRes.data.data);
-      setLeaderboard(leaderRes.data.data.slice(0, 5));
-    };
+  const [complaintError, setComplaintError] = useState(false);
 
-    load().catch(() => {
-      setMyComplaints([]);
-      setLeaderboard([]);
+  useEffect(() => {
+    let active = true;
+    const refreshComplaints = () => {
+      complaintApi.my().then(({ data }) => {
+        if (active) {
+          setMyComplaints(data.data);
+          setComplaintError(false);
+        }
+      }).catch(() => {
+        if (active) setComplaintError(true);
+      });
+    };
+    refreshComplaints();
+    window.addEventListener('focus', refreshComplaints);
+    const timer = window.setInterval(refreshComplaints, 15000);
+    userApi.leaderboard().then(({ data }) => {
+      if (active) setLeaderboard(data.data);
+    }).catch(() => {
+      if (active) setLeaderboard([]);
     });
-  }, []);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refreshComplaints);
+    };
+  }, [user?.id]);
 
   const stats = useMemo(() => {
     const total = myComplaints.length;
@@ -80,7 +96,8 @@ const DashboardPage = () => {
                 )}
               </div>
             ))}
-            {!myComplaints.length && <p className="text-sm text-slate-500">No complaints yet.</p>}
+            {complaintError && <p role="alert">Could not refresh complaints.</p>}
+            {!complaintError && !myComplaints.length && <p className="text-sm text-slate-500">No complaints yet.</p>}
           </div>
         </Card>
 
