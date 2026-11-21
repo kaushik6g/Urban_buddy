@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
-const { v4: uuid } = require('uuid');
+const { randomUUID: uuid } = require('node:crypto');
 const ApiError = require('../utils/apiError');
 
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png']);
