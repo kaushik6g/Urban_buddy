@@ -75,13 +75,15 @@ const joinCommunity = asyncHandler(async (req, res, next) => {
     return next(new ApiError(404, 'Invalid community code'));
   }
 
-  const { error: userUpdateError } = await supabase
-    .from('users')
-    .update({ community_id: community.id })
-    .eq('id', req.user.id);
-
-  if (userUpdateError) {
-    return next(new ApiError(500, userUpdateError.message));
+  const { data: outcome, error: switchError } = await supabase.rpc('switch_community', {
+    member_id: req.user.id,
+    target_id: community.id,
+    confirmed: req.body.confirmChange === true,
+  });
+  if (switchError) return next(new ApiError(500, switchError.message));
+  if (outcome === 'forbidden') return next(new ApiError(403, 'Only regular users can change communities'));
+  if (outcome === 'confirmation_required') {
+    return next(new ApiError(409, 'Confirm deletion of your previous complaints to change communities'));
   }
 
   return res.status(200).json({
