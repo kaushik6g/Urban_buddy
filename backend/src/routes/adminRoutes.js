@@ -14,6 +14,20 @@ const router = express.Router();
 
 router.use(protect, allowRoles('admin'));
 
+router.post('/members', require('../utils/asyncHandler')(async (req, res) => {
+  const db = require('../config/supabase');
+  const { data: admin, error } = await db.from('users').select('community_id').eq('id', req.user.id).eq('role','admin').single();
+  if (error || !admin?.community_id) return res.status(403).json({ message: 'Community administrator required' });
+  const adding = req.body.action === 'add';
+  if (!adding && req.body.action !== 'remove') return res.status(400).json({message:'Invalid action'});
+  let query = db.from('users').update({community_id: adding ? admin.community_id : null}).eq('role','user');
+  query = adding ? query.eq('email', String(req.body.email || '').trim().toLowerCase()).is('community_id',null)
+    : query.eq('id',req.body.id).eq('community_id',admin.community_id);
+  const result = await query.select('id').maybeSingle();
+  if (result.error) throw result.error;
+  if (!result.data) return res.status(409).json({message:'No eligible member found'});
+  return res.status(204).end();
+}));
 router.get('/complaints', getAllComplaints);
 router.get('/community', getMyCommunity);
 router.post('/community-code', (_req, res) => res.status(409).json({ message: 'Community codes are permanent.' }));
