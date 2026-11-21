@@ -1,3 +1,4 @@
+import ComplaintPhoto from '../../components/ui/ComplaintPhoto';
 import { useEffect, useState } from 'react';
 import { complaintApi, userApi } from '../../api/services';
 import Card from '../../components/ui/Card';
@@ -146,8 +147,7 @@ const ProfilePage = () => {
                     {complaint.location.address || 'View reported location'}
                   </a>
                   {(complaint.imageUrls?.length ? complaint.imageUrls : [complaint.imageUrl]).filter(Boolean).map((url, index) => (
-                    <img key={index} className="max-h-64 rounded-lg object-contain" alt={`Complaint photo ${index + 1}`}
-                      src={url!.startsWith('/') ? `${import.meta.env.VITE_API_ASSET_URL || 'http://localhost:5000'}${url}` : url!} />
+                    <ComplaintPhoto key={index} url={url} alt={`Complaint photo ${index + 1}`} />
                   ))}
                 </div>
               ))}

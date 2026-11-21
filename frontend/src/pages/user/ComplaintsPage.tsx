@@ -1,3 +1,4 @@
+import ComplaintPhoto from '../../components/ui/ComplaintPhoto';
 import { useEffect, useState } from 'react';
 import { complaintApi } from '../../api/services';
 import Badge from '../../components/ui/Badge';
@@ -7,9 +8,7 @@ import type { Complaint } from '../../types';
 
 const categories = ['', 'Pothole', 'Garbage', 'Streetlight', 'Water Leakage', 'Road Damage', 'Other'];
 const statuses = ['', 'Approved', 'In Progress', 'Resolved'];
-const assetBase = import.meta.env.VITE_API_ASSET_URL || 'http://localhost:5000';
 
-const imageSrc = (imageUrl: string) => (imageUrl.startsWith('http') ? imageUrl : `${assetBase}${imageUrl}`);
 const firstImage = (item: Complaint) => item.imageUrls?.[0] || item.imageUrl;
 
 const ComplaintsPage = () => {
@@ -84,11 +83,7 @@ const ComplaintsPage = () => {
           {items.map((item) => (
             <Card key={item.id}>
               {firstImage(item) && (
-                <img
-                  alt={item.title}
-                  className="mb-3 h-40 w-full rounded-md object-cover"
-                  src={imageSrc(firstImage(item) as string)}
-                />
+                <div className="mb-3"><ComplaintPhoto alt={item.title} url={firstImage(item)} /></div>
               )}
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="font-bold text-ink">{item.title}</h3>
