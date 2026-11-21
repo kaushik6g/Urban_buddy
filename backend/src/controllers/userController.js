@@ -91,21 +91,32 @@ const joinCommunity = asyncHandler(async (req, res, next) => {
   });
 });
 
-const getLeaderboard = asyncHandler(async (_req, res, next) => {
-  const { data, error } = await supabase
+const getLeaderboard = asyncHandler(async (req, res, next) => {
+  const { data: viewer, error: viewerError } = await supabase
+    .from('users').select('community_id').eq('id', req.user.id).single();
+  if (viewerError) return next(new ApiError(500, viewerError.message));
+  if (!viewer.community_id) return res.json({ success: true, data: [] });
+
+  const members = [];
+  const pageSize = 500;
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await supabase
     .from('users')
     .select('id, name, points, created_at')
-    .eq('role', 'user')
-    .order('points', { ascending: false })
-    .limit(20);
+      .eq('role', 'user')
+      .eq('community_id', viewer.community_id)
+      .order('points', { ascending: false })
+      .order('id')
+      .range(offset, offset + pageSize - 1);
 
-  if (error) {
-    return next(new ApiError(500, error.message));
+    if (error) return next(new ApiError(500, error.message));
+    members.push(...data);
+    if (data.length < pageSize) break;
   }
 
   return res.status(200).json({
     success: true,
-    data: data.map((user, index) => ({
+    data: members.map((user, index) => ({
       rank: index + 1,
       id: user.id,
       name: user.name,
