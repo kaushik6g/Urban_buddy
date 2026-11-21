@@ -95,6 +95,7 @@ const getLeaderboard = asyncHandler(async (_req, res, next) => {
   const { data, error } = await supabase
     .from('users')
     .select('id, name, points, created_at')
+    .eq('role', 'user')
     .order('points', { ascending: false })
     .limit(20);
 
