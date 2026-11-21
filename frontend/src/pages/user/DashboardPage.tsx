@@ -10,11 +10,15 @@ const DashboardPage = () => {
   const [myComplaints, setMyComplaints] = useState<Complaint[]>([]);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
+  const [complaintsLoading, setComplaintsLoading] = useState(true);
   const [complaintError, setComplaintError] = useState(false);
 
   useEffect(() => {
     let active = true;
+    let requestInProgress = false;
     const refreshComplaints = () => {
+      if (requestInProgress) return;
+      requestInProgress = true;
       complaintApi.my().then(({ data }) => {
         if (active) {
           setMyComplaints(data.data);
@@ -22,6 +26,9 @@ const DashboardPage = () => {
         }
       }).catch(() => {
         if (active) setComplaintError(true);
+      }).finally(() => {
+        requestInProgress = false;
+        if (active) setComplaintsLoading(false);
       });
     };
     refreshComplaints();
@@ -60,15 +67,15 @@ const DashboardPage = () => {
         </Card>
         <Card className="border-cyan-100 bg-gradient-to-b from-white to-cyan-50">
           <p className="text-sm text-slate-500">Complaints Submitted</p>
-          <p className="mt-2 text-3xl font-black text-slate-900">{stats.total}</p>
+          <p className="mt-2 text-3xl font-black text-slate-900">{complaintsLoading ? '—' : stats.total}</p>
         </Card>
         <Card className="border-amber-100 bg-gradient-to-b from-white to-amber-50">
           <p className="text-sm text-slate-500">In Progress</p>
-          <p className="mt-2 text-3xl font-black text-amber-700">{stats.inProgress}</p>
+          <p className="mt-2 text-3xl font-black text-amber-700">{complaintsLoading ? '—' : stats.inProgress}</p>
         </Card>
         <Card className="border-emerald-100 bg-gradient-to-b from-white to-emerald-50">
           <p className="text-sm text-slate-500">Resolved</p>
-          <p className="mt-2 text-3xl font-black text-emerald-700">{stats.resolved}</p>
+          <p className="mt-2 text-3xl font-black text-emerald-700">{complaintsLoading ? '—' : stats.resolved}</p>
         </Card>
       </section>
 
@@ -97,7 +104,8 @@ const DashboardPage = () => {
               </div>
             ))}
             {complaintError && <p role="alert">Could not refresh complaints.</p>}
-            {!complaintError && !myComplaints.length && <p className="text-sm text-slate-500">No complaints yet.</p>}
+            {complaintsLoading && <p role="status">Loading complaints…</p>}
+            {!complaintsLoading && !complaintError && !myComplaints.length && <p className="text-sm text-slate-500">No complaints yet.</p>}
           </div>
         </Card>
 
