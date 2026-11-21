@@ -17,9 +17,9 @@ const ProfilePage = () => {
     }).catch(() => setArchiveError(true));
   };
   const [deleteFeedback, setDeleteFeedback] = useState('');
-  const deleteComplaint = async ({ id, title, status }: Complaint) => {
-    const pointsMessage = ['Approved', 'In Progress', 'Resolved'].includes(status)
-      ? 'Deleting this report also removes its 15 approval points.'
+  const deleteComplaint = async ({ id, title, earnedPoints }: Complaint) => {
+    const pointsMessage = earnedPoints
+      ? `Deleting this report removes its ${earnedPoints} points.`
       : 'This report has no approval points to remove.';
     if (deletingId || !window.confirm(`Delete “${title}”? ${pointsMessage} It will move to Deleted complaints.`)) return;
     setDeletingId(id);

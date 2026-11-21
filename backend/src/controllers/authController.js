@@ -113,7 +113,8 @@ const register = asyncHandler(async (req, res, next) => {
       .single();
 
     if (communityCreateError) {
-      return next(new ApiError(500, communityCreateError.message));
+      await supabase.from('users').delete().eq('id', insertedUser.id).is('community_id', null);
+      return next(new ApiError(communityCreateError.code === '23505' ? 409 : 500, 'Could not create community. Choose another invite code.'));
     }
 
     const { error: userUpdateError } = await supabase

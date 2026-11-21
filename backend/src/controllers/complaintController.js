@@ -12,6 +12,7 @@ const mapComplaint = async (item) => {
   id: item.id,
   title: item.title,
   description: item.description,
+  earnedPoints: item.earned_points,
   imageUrl: photos[0] || null,
   imageUrls: photos.filter(Boolean),
   rejectNote: item.admin_note || '',

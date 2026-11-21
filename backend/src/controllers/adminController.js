@@ -31,27 +31,6 @@ const getAllComplaints = asyncHandler(async (_req, res, next) => {
   });
 });
 
-const updateUserPoints = async (userId, pointsToAdd) => {
-  const { data: user, error: userError } = await supabase
-    .from('users')
-    .select('id, points')
-    .eq('id', userId)
-    .single();
-
-  if (userError) {
-    throw new Error(userError.message);
-  }
-
-  const { error: updateError } = await supabase
-    .from('users')
-    .update({ points: (user.points || 0) + pointsToAdd })
-    .eq('id', userId);
-
-  if (updateError) {
-    throw new Error(updateError.message);
-  }
-};
-
 const approveComplaint = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
@@ -73,6 +52,7 @@ const approveComplaint = asyncHandler(async (req, res, next) => {
     .from('complaints')
     .update({ status: 'Approved', reviewed_at: new Date().toISOString() })
     .eq('id', id)
+    .eq('status', complaint.status)
     .select('*')
     .single();
 
@@ -80,13 +60,6 @@ const approveComplaint = asyncHandler(async (req, res, next) => {
     return next(new ApiError(500, updateError.message));
   }
 
-  if (complaint.status !== 'Approved') {
-    try {
-      await updateUserPoints(complaint.created_by, APPROVAL_POINTS);
-    } catch (error) {
-      return next(new ApiError(500, error.message));
-    }
-  }
 
   return res.status(200).json({
     success: true,
@@ -125,6 +98,7 @@ const rejectComplaint = asyncHandler(async (req, res, next) => {
       reviewed_at: new Date().toISOString(),
     })
     .eq('id', id)
+    .eq('status', complaint.status)
     .select('*')
     .single();
 
@@ -175,6 +149,7 @@ const updateComplaintStatus = asyncHandler(async (req, res, next) => {
     .from('complaints')
     .update(updatePayload)
     .eq('id', id)
+    .eq('status', existing.status)
     .select('*')
     .single();
 

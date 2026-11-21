@@ -16,6 +16,7 @@ export interface User {
 }
 
 export interface Complaint {
+  earnedPoints?: number;
   id: string;
   title: string;
   description: string;

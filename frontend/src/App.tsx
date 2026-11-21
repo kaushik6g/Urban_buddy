@@ -1,3 +1,4 @@
+import UpdatesPage from './pages/user/UpdatesPage';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AdminLayout from './components/layout/AdminLayout';
 import ProtectedRoute from './components/layout/ProtectedRoute';
@@ -29,6 +30,7 @@ const App = () => {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/report" element={<ReportIssuePage />} />
             <Route path="/complaints" element={<ComplaintsPage />} />
+            <Route path="/updates" element={<UpdatesPage />} />
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
         </Route>
