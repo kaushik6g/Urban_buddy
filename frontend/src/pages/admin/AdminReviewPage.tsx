@@ -5,7 +5,7 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import type { Complaint } from '../../types';
 
-const statusOptions = ['Approved', 'Resolved'];
+const statusOptions = ['Approved', 'In Progress', 'Resolved'];
 const assetBase = import.meta.env.VITE_API_ASSET_URL || 'http://localhost:5000';
 
 const resolveImageUrl = (imageUrl?: string) => {
@@ -313,9 +313,6 @@ const AdminReviewPage = () => {
                         }))
                       }
                     >
-                      {item.status === 'In Progress' && (
-                        <option value="In Progress">In Progress</option>
-                      )}
                       {statusOptions.map((s) => (
                         <option key={s} value={s}>
                           {s}
