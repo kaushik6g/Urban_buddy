@@ -82,10 +82,23 @@ const createComplaint = asyncHandler(async (req, res, next) => {
   });
 });
 
+const parsePositiveInteger = (value, fallback) => {
+  if (typeof value !== 'string' || !/^\d+$/.test(value)) {
+    return fallback;
+  }
+
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
+};
+
 const getPublicComplaints = asyncHandler(async (req, res, next) => {
-  const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
-  const limit = Number(req.query.limit) > 0 ? Math.min(Number(req.query.limit), 50) : 10;
+  const page = parsePositiveInteger(req.query.page, 1);
+  const limit = Math.min(parsePositiveInteger(req.query.limit, 10), 50);
   const offset = (page - 1) * limit;
+
+  if (!Number.isSafeInteger(offset + limit)) {
+    return next(new ApiError(400, 'Page is too large'));
+  }
 
   const category = req.query.category || null;
   const requestedStatus = req.query.status || null;
