@@ -46,13 +46,13 @@ const ComplaintsPage = () => {
 
   return (
     <div className="space-y-4">
-      <Card className="bg-white/95 shadow-sm">
-        <h2 className="text-2xl font-black tracking-tight text-slate-900">Public Complaints</h2>
-        <p className="mt-1 text-sm text-slate-600">Explore approved community issues with filters.</p>
+      <Card>
+        <h2 className="text-2xl font-semibold tracking-tight text-ink">Public Complaints</h2>
+        <p className="mt-1 text-sm text-muted">Explore approved community issues with filters.</p>
 
         <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center">
           <select
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+            className="rounded-md border border-line bg-white px-3 py-2 text-sm"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           >
@@ -64,7 +64,7 @@ const ComplaintsPage = () => {
           </select>
 
           <select
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+            className="rounded-md border border-line bg-white px-3 py-2 text-sm"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
@@ -82,24 +82,24 @@ const ComplaintsPage = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {items.map((item) => (
-            <Card className="bg-white/95 transition hover:-translate-y-0.5 hover:shadow-lg" key={item.id}>
+            <Card key={item.id}>
               {firstImage(item) && (
                 <img
                   alt={item.title}
-                  className="mb-3 h-40 w-full rounded-xl object-cover"
+                  className="mb-3 h-40 w-full rounded-md object-cover"
                   src={imageSrc(firstImage(item) as string)}
                 />
               )}
               <div className="mb-2 flex items-center justify-between">
-                <h3 className="font-bold text-slate-900">{item.title}</h3>
+                <h3 className="font-bold text-ink">{item.title}</h3>
                 <Badge text={item.status} />
               </div>
-              <p className="text-sm text-slate-600">{item.description}</p>
-              <p className="mt-2 inline-flex rounded-full border border-sky-100 bg-sky-50 px-2 py-0.5 text-xs font-semibold text-sky-700">
+              <p className="text-sm text-muted">{item.description}</p>
+              <p className="mt-2 inline-flex rounded-full border border-sky-100 bg-sky-50 px-2 py-0.5 text-xs font-semibold text-leaf">
                 {item.category}
               </p>
               <a
-                className="mt-3 inline-block text-xs font-semibold text-sky-700"
+                className="mt-3 inline-block text-xs font-semibold text-leaf"
                 href={`https://www.google.com/maps?q=${item.location.latitude},${item.location.longitude}`}
                 rel="noreferrer"
                 target="_blank"
@@ -119,7 +119,7 @@ const ComplaintsPage = () => {
         <Button variant="ghost" onClick={() => load(Math.min(totalPages, page + 1))} disabled={page >= totalPages}>
           Next
         </Button>
-        <p className="ml-2 self-center text-xs text-slate-500">
+        <p className="ml-2 self-center text-xs text-muted">
           Page {page} of {Math.max(1, totalPages)}
         </p>
       </div>

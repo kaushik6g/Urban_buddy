@@ -53,14 +53,14 @@ const ProfilePage = () => {
   };
 
   if (!profile) {
-    return <Card className="bg-white/95">Loading profile...</Card>;
+    return <Card>Loading profile...</Card>;
   }
 
   return (
-    <div className="grid gap-4">
-      <Card className="bg-white/95 shadow-sm">
-        <h2 className="text-2xl font-black tracking-tight text-slate-900">Profile</h2>
-        <div className="mt-4 space-y-2 text-sm text-slate-700">
+    <div className="grid items-start gap-5 lg:grid-cols-[2fr_3fr]">
+      <Card>
+        <h2 className="text-2xl font-semibold tracking-tight text-ink">Profile</h2>
+        <div className="mt-4 space-y-2 text-sm text-ink">
           <p>
             <span className="font-semibold">Name:</span> {profile.user.name}
           </p>
@@ -82,13 +82,13 @@ const ProfilePage = () => {
 
         {joinMessage && <p role="status" className="mt-3 text-sm text-emerald-600">{joinMessage}</p>}
         {profile.user.role === 'user' && profile.user.communityId && !showChange && (
-          <button type="button" className="mt-4 font-semibold text-sky-700" onClick={() => setShowChange(true)}>
+          <button type="button" className="mt-4 font-semibold text-leaf" onClick={() => setShowChange(true)}>
             Change community
           </button>
         )}
         {profile.user.role === 'user' && (!profile.user.communityId || showChange) && (
-          <form className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/80 p-3 space-y-2" onSubmit={onJoinCommunity}>
-            <label className="block text-sm font-semibold text-slate-700">{profile.user.communityId ? 'New community code' : 'Join Community with Code'}</label>
+          <form className="mt-5 rounded-md border border-line bg-paper p-3 space-y-2" onSubmit={onJoinCommunity}>
+            <label className="block text-sm font-semibold text-ink">{profile.user.communityId ? 'New community code' : 'Join Community with Code'}</label>
             {profile.user.communityId && (
               <label className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
                 <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} required />
@@ -97,14 +97,14 @@ const ProfilePage = () => {
             )}
             <div className="flex gap-2">
               <input
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+                className="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none transition focus:border-leaf"
                 placeholder="Enter code"
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                 required
               />
               <button
-                className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-sky-500"
+                className="rounded-lg bg-leaf px-3 py-2 text-sm font-semibold text-white transition hover:bg-ink"
                 type="submit"
                 disabled={joining || Boolean(profile.user.communityId && !confirmed)}
               >
@@ -117,32 +117,32 @@ const ProfilePage = () => {
         )}
       </Card>
 
-      <Card className="bg-white/95 shadow-sm">
-        <h3 className="text-xl font-black tracking-tight text-slate-900">Activity History</h3>
+      <Card>
+        <h3 className="text-xl font-semibold tracking-tight text-ink">Activity History</h3>
         <div className="mt-3 space-y-2">
           {profile.activity.map((item: ProfileActivity) => (
-            <details key={item.id} className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
-              <summary className="flex cursor-pointer list-none items-start justify-between gap-4 [&::-webkit-details-marker]:hidden">
+            <details key={item.id} className="rounded-md border border-line bg-paper p-3">
+              <summary className="flex flex-wrap cursor-pointer list-none items-start justify-between gap-4 [&::-webkit-details-marker]:hidden">
               <div>
-                <p className="font-medium text-slate-800">{item.title}</p>
-                <p className="text-xs text-slate-500">{new Date(item.createdAt).toLocaleString()}</p>
+                <p className="font-medium text-ink">{item.title}</p>
+                <p className="text-xs text-muted">{new Date(item.createdAt).toLocaleString()}</p>
                 {item.status === 'Rejected' && item.rejectNote && (
                   <p className="mt-1 text-xs font-medium text-rose-700">Rejected Reason: {item.rejectNote}</p>
                 )}
                 {item.status !== 'Rejected' && item.progressNote && (
-                  <p className="mt-1 text-xs font-medium text-sky-700">Latest Update: {item.progressNote}</p>
+                  <p className="mt-1 text-xs font-medium text-leaf">Latest Update: {item.progressNote}</p>
                 )}
               </div>
               <span className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                 <Badge text={item.status} />
-                <span className="text-sm font-semibold text-sky-700 underline">Issue details</span>
+                <span className="text-sm font-semibold text-leaf underline">Issue details</span>
               </span>
               </summary>
               {complaints.filter((complaint) => complaint.id === item.id).map((complaint) => (
-                <div key={complaint.id} className="mt-3 space-y-2 text-sm text-slate-700">
+                <div key={complaint.id} className="mt-3 space-y-2 text-sm text-ink">
                   <p className="font-semibold">{complaint.category}</p>
                   <p className="whitespace-pre-wrap">{complaint.description}</p>
-                  <a className="text-sky-700 underline" href={`https://www.google.com/maps?q=${complaint.location.latitude},${complaint.location.longitude}`}>
+                  <a className="text-leaf underline" href={`https://www.google.com/maps?q=${complaint.location.latitude},${complaint.location.longitude}`}>
                     {complaint.location.address || 'View reported location'}
                   </a>
                   {(complaint.imageUrls?.length ? complaint.imageUrls : [complaint.imageUrl]).filter(Boolean).map((url, index) => (
@@ -154,7 +154,7 @@ const ProfilePage = () => {
               {detailsError && <button type="button" onClick={loadDetails}>Retry loading details</button>}
             </details>
           ))}
-          {!profile.activity.length && <p className="text-sm text-slate-500">No activity yet.</p>}
+          {!profile.activity.length && <p className="text-sm text-muted">No activity yet.</p>}
         </div>
       </Card>
     </div>

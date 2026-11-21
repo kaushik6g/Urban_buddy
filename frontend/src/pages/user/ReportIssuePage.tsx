@@ -70,22 +70,29 @@ const ReportIssuePage = () => {
   };
 
   return (
-    <Card className="bg-white/95 shadow-md">
-      <h2 className="text-3xl font-black tracking-tight text-slate-900">Report a Civic Issue</h2>
-      <p className="mt-1 text-sm text-slate-600">Upload proof, add details, and submit for municipal review.</p>
+    <Card>
+      <h2 className="text-3xl font-semibold tracking-tight text-ink">Report an issue</h2>
+      <p className="mt-1 text-sm text-muted">Your community administrator will review this report.</p>
 
       <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-        <Input placeholder="Issue title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-        <TextArea
-          placeholder="Describe the issue clearly"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-        />
+        <label className="field-label">
+          Issue title
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
+        </label>
+        <label className="field-label">
+          Description
+          <TextArea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+          />
+        </label>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <select
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+          <label className="field-label">
+            Category
+            <select
+            className="w-full rounded-md border border-line bg-white px-3 py-2.5 text-sm outline-none transition focus:border-leaf"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           >
@@ -94,28 +101,36 @@ const ReportIssuePage = () => {
                 {item}
               </option>
             ))}
-          </select>
+            </select>
+          </label>
 
-          <Input placeholder="Address (optional)" value={address} onChange={(e) => setAddress(e.target.value)} />
+          <label className="field-label">
+            Address (optional)
+            <Input value={address} onChange={(e) => setAddress(e.target.value)} />
+          </label>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Input
-            placeholder="Latitude"
-            value={latitude}
-            onChange={(e) => setLatitude(e.target.value)}
-            required
-            type="number"
-            step="any"
-          />
-          <Input
-            placeholder="Longitude"
-            value={longitude}
-            onChange={(e) => setLongitude(e.target.value)}
-            required
-            type="number"
-            step="any"
-          />
+          <label className="field-label">
+            Latitude
+            <Input
+              value={latitude}
+              onChange={(e) => setLatitude(e.target.value)}
+              required
+              type="number"
+              step="any"
+            />
+          </label>
+          <label className="field-label">
+            Longitude
+            <Input
+              value={longitude}
+              onChange={(e) => setLongitude(e.target.value)}
+              required
+              type="number"
+              step="any"
+            />
+          </label>
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -123,10 +138,10 @@ const ReportIssuePage = () => {
             Use Current Location
           </Button>
 
-          <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+          <label className="focus-within:outline-2 inline-flex cursor-pointer items-center justify-center rounded-md border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink hover:bg-slate-100">
             Take Photo
             <input
-              className="hidden"
+              className="sr-only"
               type="file"
               accept=".jpg,.jpeg,.png,image/jpeg,image/png"
               capture="environment"
@@ -134,24 +149,27 @@ const ReportIssuePage = () => {
             />
           </label>
 
-          <div className="min-w-[260px]">
-            <Input
-              type="file"
-              accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-              multiple
-              onChange={(e) => replaceImages(e.target.files)}
-            />
-            <p className="mt-1 text-xs text-slate-500">Allowed formats: JPG, JPEG, PNG (max 5MB each, up to 8 files)</p>
+          <div className="min-w-0 max-w-full">
+            <label className="field-label">
+              Upload photos
+              <Input
+                type="file"
+                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                multiple
+                onChange={(e) => replaceImages(e.target.files)}
+              />
+            </label>
+            <p className="mt-1 text-xs text-muted">Allowed formats: JPG, JPEG, PNG (max 5MB each, up to 8 files)</p>
             {!!images.length && (
-              <p className="mt-1 text-xs font-medium text-sky-700">{images.length} photo(s) selected</p>
+              <p className="mt-1 text-xs font-medium text-leaf">{images.length} photo(s) selected</p>
             )}
           </div>
         </div>
 
         {!!images.length && (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div className="rounded-md border border-line bg-paper p-3">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Selected Photos</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">Selected Photos</p>
               <button
                 className="text-xs font-semibold text-rose-600 hover:text-rose-500"
                 onClick={() => setImages([])}
@@ -162,7 +180,7 @@ const ReportIssuePage = () => {
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
               {images.map((file, index) => (
-                <p className="truncate rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600" key={`${file.name}-${index}`}>
+                <p className="truncate rounded-md border border-line bg-white px-2 py-1 text-xs text-muted" key={`${file.name}-${index}`}>
                   {index + 1}. {file.name}
                 </p>
               ))}

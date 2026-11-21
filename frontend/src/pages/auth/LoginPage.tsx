@@ -25,26 +25,29 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[linear-gradient(140deg,#ecfeff_10%,#f8fafc_45%,#cffafe_100%)] p-4">
-      <Card className="w-full max-w-md border-white/70 bg-white/80 shadow-xl">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">Welcome Back</h1>
-        <p className="mt-1 text-sm text-slate-600">Sign in to report and track civic issues.</p>
+    <div className="flex min-h-screen items-center justify-center bg-paper p-4">
+      <Card className="w-full max-w-md">
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">Sign in to UrbanBuddy</h1>
 
         <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-          <Input
-            placeholder="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            placeholder="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <label className="field-label">
+            Email
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </label>
+          <label className="field-label">
+            Password
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </label>
 
 
           {error && <p className="text-sm text-rose-600">{error}</p>}
@@ -54,9 +57,9 @@ const LoginPage = () => {
           </Button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-slate-600">
+        <p className="mt-4 text-center text-sm text-muted">
           New here?{' '}
-          <Link className="font-semibold text-sky-700" to="/register">
+          <Link className="font-semibold text-leaf" to="/register">
             Create an account
           </Link>
         </p>

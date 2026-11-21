@@ -37,31 +37,37 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[linear-gradient(140deg,#ecfeff_10%,#f8fafc_45%,#cffafe_100%)] p-4">
-      <Card className="w-full max-w-md border-white/70 bg-white/80 shadow-xl">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">Create Account</h1>
-        <p className="mt-1 text-sm text-slate-600">Start improving your city with UrbanBuddy.</p>
+    <div className="flex min-h-screen items-center justify-center bg-paper p-4">
+      <Card className="w-full max-w-md">
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">Create an account</h1>
 
         <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-          <Input placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} required />
-          <Input
-            placeholder="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            placeholder="Password (min 6 chars)"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <label className="field-label">
+            Full name
+            <Input value={name} onChange={(e) => setName(e.target.value)} required />
+          </label>
+          <label className="field-label">
+            Email
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </label>
+          <label className="field-label">
+            Password (6 characters minimum)
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </label>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-              <span className="mb-1 block text-xs font-semibold text-slate-500">Account Type</span>
+            <label className="rounded-md border border-line bg-white px-3 py-2 text-sm text-ink">
+              <span className="mb-1 block text-xs font-semibold text-muted">Account Type</span>
               <select
                 className="w-full bg-transparent outline-none"
                 value={role}
@@ -73,18 +79,23 @@ const RegisterPage = () => {
             </label>
 
             {role === 'admin' ? (
-              <Input
-                placeholder="Community name"
-                value={communityName}
-                onChange={(e) => setCommunityName(e.target.value)}
-                required
-              />
+              <label className="field-label">
+                Community name
+                <Input
+                  value={communityName}
+                  onChange={(e) => setCommunityName(e.target.value)}
+                  required
+                />
+              </label>
             ) : (
-              <Input
-                placeholder="Community code" required
-                value={communityCode}
-                onChange={(e) => setCommunityCode(e.target.value.toUpperCase())}
-              />
+              <label className="field-label">
+                Community code
+                <Input
+                  required
+                  value={communityCode}
+                  onChange={(e) => setCommunityCode(e.target.value.toUpperCase())}
+                />
+              </label>
             )}
           </div>
 
@@ -95,9 +106,9 @@ const RegisterPage = () => {
           </Button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-slate-600">
+        <p className="mt-4 text-center text-sm text-muted">
           Already registered?{' '}
-          <Link className="font-semibold text-sky-700" to="/login">
+          <Link className="font-semibold text-leaf" to="/login">
             Sign in
           </Link>
         </p>
