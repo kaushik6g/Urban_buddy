@@ -77,7 +77,15 @@ const AdminReviewPage = () => {
   const updateStatus = async (id: string) => {
     const status = statusById[id] || 'Approved';
     const progressNote = String(updateNoteById[id] || '').trim();
-    await adminApi.updateStatus(id, status, progressNote);
+    if (!progressNote) return window.alert('Enter a comment before saving.');
+    try {
+      await adminApi.updateStatus(id, status, progressNote);
+      setUpdateNoteById((previous) => ({ ...previous, [id]: '' }));
+      window.alert('Status updated to ' + status + '.');
+    } catch {
+      window.alert('Could not save the update. Please try again.');
+      return;
+    }
     load();
   };
 
@@ -301,7 +309,7 @@ const AdminReviewPage = () => {
                 <div className="mt-4 rounded-md border border-line bg-paper p-3">
                   <p className="text-xs uppercase tracking-wide text-muted">Update Status</p>
                   <p className="mt-1 text-sm text-muted">
-                    Share a clear status and optional update comment for the user.
+                    Add a comment explaining this update to the reporter.
                   </p>
                   <div className="mt-3 grid gap-2 sm:grid-cols-[220px_1fr]">
                     <select

@@ -8,6 +8,7 @@ import type { Complaint } from '../../types';
 const DashboardPage = () => {
   const { user } = useAuth();
   const [myComplaints, setMyComplaints] = useState<Complaint[]>([]);
+  const [points, setPoints] = useState(user?.points || 0);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
   const [complaintsLoading, setComplaintsLoading] = useState(true);
@@ -19,6 +20,7 @@ const DashboardPage = () => {
     const refreshComplaints = () => {
       if (requestInProgress) return;
       requestInProgress = true;
+      userApi.profile().then(({ data }) => { if (active) setPoints(data.data.user.points); }).catch(() => {});
       complaintApi.my().then(({ data }) => {
         if (active) {
           setMyComplaints(data.data);
@@ -62,12 +64,15 @@ const DashboardPage = () => {
       <section aria-label="Summary" className="metric-strip">
         <div>
           <p className="text-sm text-muted">Points</p>
-          <p className="mt-2 text-3xl font-semibold tabular-nums">{user?.points ?? 0}</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{points}</p>
         </div>
         <div>
           <p className="text-sm text-muted">Complaints Submitted</p>
           <p className="mt-2 text-3xl font-semibold tabular-nums">{complaintsLoading ? '—' : stats.total}</p>
         </div>
+        {['Approved', 'Rejected'].map((status) => (
+          <div key={status}><p className="text-sm text-muted">{status}</p><p className="mt-2 text-3xl font-semibold tabular-nums">{complaintsLoading ? '�' : myComplaints.filter((item) => item.status === status).length}</p></div>
+        ))}
         <div>
           <p className="text-sm text-muted">In Progress</p>
           <p className="mt-2 text-3xl font-semibold tabular-nums">{complaintsLoading ? '—' : stats.inProgress}</p>

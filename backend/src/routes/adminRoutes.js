@@ -6,7 +6,6 @@ const {
   rejectComplaint,
   updateComplaintStatus,
   getMyCommunity,
-  createOrRefreshCommunityCode,
 } = require('../controllers/adminController');
 const { protect, allowRoles } = require('../middleware/auth');
 const validate = require('../middleware/validate');
@@ -17,7 +16,7 @@ router.use(protect, allowRoles('admin'));
 
 router.get('/complaints', getAllComplaints);
 router.get('/community', getMyCommunity);
-router.post('/community-code', createOrRefreshCommunityCode);
+router.post('/community-code', (_req, res) => res.status(409).json({ message: 'Community codes are permanent.' }));
 router.put('/complaints/:id/approve', approveComplaint);
 router.put(
   '/complaints/:id/reject',
@@ -32,7 +31,7 @@ router.put(
   '/complaints/:id/status',
   [
     body('status').isIn(['Approved', 'In Progress', 'Resolved']).withMessage('Invalid status'),
-    body('progressNote').optional().isLength({ max: 500 }).withMessage('Progress note too long'),
+    body('progressNote').isString().bail().trim().notEmpty().withMessage('A status comment is required').bail().isLength({ max: 500 }).withMessage('Progress note too long'),
     validate,
   ],
   updateComplaintStatus

@@ -100,7 +100,7 @@ const register = asyncHandler(async (req, res, next) => {
   }
 
   if (role === 'admin') {
-    const code = await generateUniqueCommunityCode();
+    const code = communityCode?.trim().toUpperCase() || await generateUniqueCommunityCode();
 
     const { data: newCommunity, error: communityCreateError } = await supabase
       .from('communities')

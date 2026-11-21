@@ -18,15 +18,12 @@ const primaryImage = (item: Complaint) => item.imageUrls?.[0] || item.imageUrl;
 const AdminDashboardPage = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [community, setCommunity] = useState<any>(null);
-  const [communityName, setCommunityName] = useState('');
-  const [communityMessage, setCommunityMessage] = useState('');
 
   useEffect(() => {
     Promise.all([adminApi.listComplaints(), adminApi.getCommunity()])
       .then(([complaintsResponse, communityResponse]) => {
         setComplaints(complaintsResponse.data.data);
         setCommunity(communityResponse.data.data);
-        setCommunityName(communityResponse.data.data?.name || '');
       })
       .catch(() => {
         setComplaints([]);
@@ -34,12 +31,6 @@ const AdminDashboardPage = () => {
       });
   }, []);
 
-  const generateCode = async () => {
-    const response = await adminApi.createOrRefreshCommunityCode(communityName || undefined);
-    setCommunity(response.data.data);
-    setCommunityName(response.data.data.name);
-    setCommunityMessage(response.data.message || 'Community code updated');
-  };
 
   const stats = useMemo(() => {
     const pending = complaints.filter((c) => c.status === 'Pending').length;
@@ -121,21 +112,7 @@ const AdminDashboardPage = () => {
           Share this code with users so they can join your community.
         </p>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
-          <input
-            className="rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-muted"
-            placeholder="Community name"
-            value={communityName}
-            onChange={(e) => setCommunityName(e.target.value)}
-          />
-          <button
-            className="rounded-md bg-leaf px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
-            onClick={generateCode}
-            type="button"
-          >
-            Generate Unique Code
-          </button>
-        </div>
+        <p className="mt-2 text-sm text-muted">Your community invite code is permanent.</p>
 
         <p className="mt-3 text-sm text-ink">
           Current Code:{' '}
@@ -143,7 +120,6 @@ const AdminDashboardPage = () => {
             {community?.code || 'Not generated yet'}
           </span>
         </p>
-        {communityMessage && <p className="mt-2 text-sm text-ink">{communityMessage}</p>}
       </Card>
     </div>
   );

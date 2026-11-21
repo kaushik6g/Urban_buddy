@@ -71,7 +71,7 @@ const RegisterPage = () => {
               <select
                 className="w-full bg-transparent outline-none"
                 value={role}
-                onChange={(e) => setRole(e.target.value as 'user' | 'admin')}
+                onChange={(e) => { setRole(e.target.value as 'user' | 'admin'); setCommunityCode(''); }}
               >
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
@@ -79,6 +79,7 @@ const RegisterPage = () => {
             </label>
 
             {role === 'admin' ? (
+              <>
               <label className="field-label">
                 Community name
                 <Input
@@ -87,6 +88,10 @@ const RegisterPage = () => {
                   required
                 />
               </label>
+              <label className="field-label">Permanent invite code
+                <Input placeholder="Leave blank to generate a unique code" value={communityCode} minLength={4} maxLength={12} onChange={(event) => setCommunityCode(event.target.value.toUpperCase())} />
+                <small>Choose a custom code or leave blank. The code cannot be changed after registration.</small>
+              </label></>
             ) : (
               <label className="field-label">
                 Community code

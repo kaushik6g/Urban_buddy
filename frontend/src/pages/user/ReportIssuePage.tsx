@@ -15,7 +15,6 @@ const ReportIssuePage = () => {
   const [address, setAddress] = useState('');
   const [images, setImages] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
   const replaceImages = (fileList: FileList | null) => {
@@ -43,7 +42,7 @@ const ReportIssuePage = () => {
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
-    setMessage('');
+    const form = event.currentTarget as HTMLFormElement;
     setLoading(true);
 
     try {
@@ -57,7 +56,11 @@ const ReportIssuePage = () => {
       images.forEach((file) => formData.append('images', file));
 
       const response = await complaintApi.create(formData);
-      setMessage(response.data.message || 'Complaint submitted successfully');
+      form.reset();
+      setCategory(categories[0]);
+      setLatitude('');
+      setLongitude('');
+      window.alert(response.data.message || 'Complaint submitted.');
       setTitle('');
       setDescription('');
       setAddress('');
@@ -188,7 +191,6 @@ const ReportIssuePage = () => {
           </div>
         )}
 
-        {message && <p className="text-sm text-emerald-700">{message}</p>}
         {error && <p className="text-sm text-rose-600">{error}</p>}
 
         <Button className="min-w-44" disabled={loading} type="submit">
