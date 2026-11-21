@@ -7,11 +7,20 @@ const notFound = (_req, res) => {
   });
 };
 
-const errorHandler = (err, _req, res, _next) => {
-  const statusCode = err.statusCode || 500;
+const errorHandler = (err, _req, res, next) => {
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  const status = err.statusCode ?? err.status;
+  const statusCode = Number.isInteger(status) && status >= 400 && status <= 599
+    ? status
+    : 500;
   res.status(statusCode).json({
     success: false,
-    message: err.message || 'Internal server error',
+    message: statusCode >= 500 && nodeEnv !== 'development'
+      ? 'Internal server error'
+      : err.message || 'Internal server error',
     ...(nodeEnv === 'development' ? { stack: err.stack } : {}),
   });
 };

@@ -9,7 +9,7 @@ interface AuthContextValue {
   token: string | null;
   loading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<User>;
+  login: (email: string, password: string, communityCode?: string) => Promise<User>;
   register: (
     name: string,
     email: string,
@@ -39,10 +39,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     storage.setUser(user);
   }, [token, user]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, communityCode?: string) => {
     setLoading(true);
     try {
-      const response = await authApi.login({ email, password });
+      const response = await authApi.login({ email, password, communityCode });
       setToken(response.data.token);
       setUser(response.data.user);
       return response.data.user as User;
