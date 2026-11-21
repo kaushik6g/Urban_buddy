@@ -158,13 +158,10 @@ const deleteComplaint = asyncHandler(async (req, res, next) => {
     return next(new ApiError(400, 'Invalid complaint ID'));
   }
 
-  const { data, error } = await supabase
-    .from('complaints')
-    .delete()
-    .eq('id', id)
-    .eq('created_by', req.user.id)
-    .select('id')
-    .maybeSingle();
+  const { data, error } = await supabase.rpc('archive_complaint', {
+    p_id: id,
+    p_owner: req.user.id,
+  });
 
   if (error) return next(new ApiError(500, 'Could not delete complaint'));
   if (!data) return next(new ApiError(404, 'Complaint not found'));
@@ -172,7 +169,18 @@ const deleteComplaint = asyncHandler(async (req, res, next) => {
   return res.status(204).end();
 });
 
+const getDeletedComplaints = asyncHandler(async (req, res, next) => {
+  const { data, error } = await supabase
+    .from('deleted_complaints')
+    .select('id, title, deleted_at')
+    .eq('created_by', req.user.id)
+    .order('deleted_at', { ascending: false });
+  if (error) return next(new ApiError(500, 'Could not load deleted complaints'));
+  return res.json({ success: true, data });
+});
+
 module.exports = {
+  getDeletedComplaints,
   deleteComplaint,
   createComplaint,
   getPublicComplaints,

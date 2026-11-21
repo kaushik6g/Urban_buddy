@@ -4,6 +4,7 @@ const {
   createComplaint,
   getPublicComplaints,
   getMyComplaints,
+  getDeletedComplaints,
   deleteComplaint,
 } = require('../controllers/complaintController');
 const upload = require('../middleware/upload');
@@ -37,6 +38,7 @@ router.post(
 router.get('/', getPublicComplaints);
 router.get('/my', protect, getMyComplaints);
 
+router.get('/deleted', protect, getDeletedComplaints);
 router.delete('/:id', protect, deleteComplaint);
 
 module.exports = router;

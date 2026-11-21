@@ -20,6 +20,7 @@ export const userApi = {
 };
 
 export const complaintApi = {
+  deleted: () => api.get('/complaints/deleted'),
   remove: (id: string) => api.delete('/complaints/' + encodeURIComponent(id)),
   create: (formData: FormData) =>
     api.post('/complaints', formData, {

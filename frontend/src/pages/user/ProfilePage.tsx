@@ -8,15 +8,24 @@ import type { Complaint } from '../../types';
 const ProfilePage = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleted, setDeleted] = useState<{ id: string; title: string; deleted_at: string }[]>([]);
+  const [archiveError, setArchiveError] = useState(false);
+  const loadDeleted = () => {
+    complaintApi.deleted().then(({ data }) => {
+      setDeleted(data.data);
+      setArchiveError(false);
+    }).catch(() => setArchiveError(true));
+  };
   const [deleteFeedback, setDeleteFeedback] = useState('');
   const deleteComplaint = async (id: string) => {
-    if (deletingId || !window.confirm('Permanently delete this complaint?')) return;
+    if (deletingId || !window.confirm('Delete this complaint? It will be removed from active reports and listed in Deleted complaints.')) return;
     setDeletingId(id);
     setDeleteFeedback('');
     try {
       await complaintApi.remove(id);
       setComplaints((current) => current.filter((complaint) => complaint.id !== id));
-      setDeleteFeedback('Complaint deleted.');
+      loadDeleted();
+      window.alert('Complaint deleted.');
     } catch {
       setDeleteFeedback('Could not delete the complaint. Please try again.');
     } finally {
@@ -47,6 +56,7 @@ const ProfilePage = () => {
   useEffect(() => {
     loadProfile();
     loadDetails();
+    loadDeleted();
   }, []);
 
   const onJoinCommunity = async (event: React.FormEvent) => {
@@ -178,6 +188,14 @@ const ProfilePage = () => {
           ))}
           {!detailsError && !complaints.length && <p className="text-sm text-muted">No activity yet.</p>}
         </div>
+      </Card>
+      <Card className="md:col-start-2">
+        <h3 className="text-xl font-semibold">Deleted complaints</h3>
+        {archiveError ? <button type="button" onClick={loadDeleted}>Retry loading deleted complaints</button> : deleted.length ? (
+          <ul className="mt-3 divide-y divide-line">
+            {deleted.map((item) => <li key={item.id} className="py-2">{item.title} <time className="block text-sm text-muted" dateTime={item.deleted_at}>{new Date(item.deleted_at).toLocaleString()}</time></li>)}
+          </ul>
+        ) : <p className="mt-2 text-sm text-muted">No deleted complaints yet.</p>}
       </Card>
     </div>
   );
