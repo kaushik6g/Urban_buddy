@@ -8,7 +8,7 @@ const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png']);
 const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png']);
 const UPLOADS_DIR = path.resolve(__dirname, '../../uploads');
 
-if (!fs.existsSync(UPLOADS_DIR)) {
+if (!process.env.VERCEL && !fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
@@ -33,7 +33,7 @@ const fileFilter = (_req, file, cb) => {
 };
 
 const upload = multer({
-  storage,
+  storage: process.env.VERCEL ? multer.memoryStorage() : storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter,
 });
