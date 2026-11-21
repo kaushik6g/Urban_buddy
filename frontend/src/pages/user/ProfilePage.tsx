@@ -58,8 +58,8 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="grid items-start gap-5 lg:grid-cols-[2fr_3fr]">
-      <Card>
+    <div className="grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
+      <Card className="border-t-4 border-t-leaf">
         <h2 className="text-2xl font-semibold tracking-tight text-ink">Profile</h2>
         <div className="mt-4 space-y-2 text-sm text-ink">
           <p>
@@ -136,7 +136,7 @@ const ProfilePage = () => {
               </div>
               <span className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                 <Badge text={item.status} />
-                <span className="text-sm font-semibold text-leaf underline">Issue details</span>
+                <span className="text-sm font-semibold rounded-md border border-line bg-white px-2 py-1 text-leaf">Issue details</span>
               </span>
               </summary>
               {complaints.filter((complaint) => complaint.id === item.id).map((complaint) => (

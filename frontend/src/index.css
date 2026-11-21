@@ -21,7 +21,7 @@ h1, h2, h3 { text-wrap: balance; }
 .field-label { display: grid; gap: .35rem; font-size: .875rem; font-weight: 600; }
 .field-label :is(input,textarea,select) { font-weight: 400; min-width: 0; }
 .metric-strip { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1px; background: var(--color-line); border-block: 1px solid var(--color-line); }
-.metric-strip > div { background: var(--color-paper); padding: 1rem; }
+.metric-strip > div { background: #edf4ef; padding: 1rem; }
 @media (min-width: 48rem) {
   .metric-strip { grid-template-columns: repeat(auto-fit,minmax(7rem,1fr)); }
 }

@@ -12,14 +12,14 @@ export default function PortalLayout({ portal, links }: Props) {
   return (
     <div className="min-h-screen">
       <a href="#content" className="sr-only focus:not-sr-only">Skip to content</a>
-      <header className="border-b border-line bg-white">
+      <header className="bg-[#18392e] text-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-8">
           <div className="flex flex-wrap items-baseline gap-x-3">
-            <span className="text-xl font-semibold tracking-tight">UrbanBuddy</span>
-            <span className="text-sm text-muted">{portal}</span>
+            <span className="text-xl font-bold tracking-tight">UrbanBuddy</span>
+            <span className="text-sm text-[#c8dbd2]">{portal}</span>
           </div>
           <div className="flex shrink-0 items-center gap-4 text-sm">
-            <span className="hidden text-muted sm:inline">{user?.name}</span>
+            <span className="hidden text-[#c8dbd2] sm:inline">{user?.name}</span>
             <button onClick={logout} type="button" className="flex items-center gap-2 rounded-sm py-2 font-medium hover:underline">
               <LogOut size={15} aria-hidden="true" /> Sign out
             </button>
@@ -29,7 +29,7 @@ export default function PortalLayout({ portal, links }: Props) {
           {links.map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} end className={({ isActive }) =>
               'inline-flex items-center gap-2 border-b-2 py-3 text-sm font-medium ' +
-              (isActive ? 'border-leaf text-leaf' : 'border-transparent text-muted hover:text-ink')
+              (isActive ? 'border-[#a6d7bc] text-white' : 'border-transparent text-[#c8dbd2] hover:text-white')
             }>
               <Icon size={15} aria-hidden="true" />{label}
             </NavLink>
