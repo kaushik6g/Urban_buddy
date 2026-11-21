@@ -7,7 +7,7 @@ const validate = require('../middleware/validate');
 const router = express.Router();
 
 router.get('/profile', protect, getProfile);
-router.get('/leaderboard', getLeaderboard);
+router.get('/leaderboard', protect, getLeaderboard);
 router.post(
 	'/join-community',
 	protect,
