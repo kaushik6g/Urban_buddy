@@ -1,3 +1,4 @@
+import ComplaintUpdates from '../../components/ui/ComplaintUpdates';
 import { useEffect, useMemo, useState } from 'react';
 import { complaintApi, userApi } from '../../api/services';
 import Card from '../../components/ui/Card';
@@ -82,6 +83,8 @@ const DashboardPage = () => {
           <p className="mt-2 text-3xl font-semibold tabular-nums">{complaintsLoading ? '—' : stats.resolved}</p>
         </div>
       </section>
+
+      <ComplaintUpdates />
 
       <section className="grid items-start gap-5 lg:grid-cols-[3fr_2fr]">
         <Card>
