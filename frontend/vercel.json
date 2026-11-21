@@ -1,8 +1,12 @@
 {
   "rewrites": [
     {
-      "source": "/api/complaint-removal/:id",
-      "destination": "https://urban-buddy-api.vercel.app/api/complaints/:id"
+      "source": "/backend-api/:path*",
+      "destination": "https://urban-buddy-api.vercel.app/api/:path*"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "https://urban-buddy-api.vercel.app/uploads/:path*"
     },
     {
       "source": "/(.*)",

@@ -3,7 +3,7 @@ import { adminApi } from '../../api/services';
 import Card from '../../components/ui/Card';
 import type { Complaint } from '../../types';
 
-const assetBase = import.meta.env.VITE_API_ASSET_URL || 'http://localhost:5000';
+const assetBase = import.meta.env.DEV ? import.meta.env.VITE_API_ASSET_URL || 'http://localhost:5000' : '';
 
 const resolveImageUrl = (imageUrl?: string) => {
   if (!imageUrl) return '';

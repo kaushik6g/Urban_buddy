@@ -20,7 +20,7 @@ export const userApi = {
 };
 
 export const complaintApi = {
-  remove: (id: string) => api.delete('/api/complaint-removal/' + encodeURIComponent(id), { baseURL: '/' }),
+  remove: (id: string) => api.delete('/complaints/' + encodeURIComponent(id)),
   create: (formData: FormData) =>
     api.post('/complaints', formData, {
       headers: {

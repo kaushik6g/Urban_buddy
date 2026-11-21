@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 function photoSource(url: string) {
   if (/^https?:\/\//i.test(url)) return url;
-  const base = import.meta.env.VITE_API_ASSET_URL || import.meta.env.VITE_API_URL || window.location.origin;
+  const base = import.meta.env.DEV ? import.meta.env.VITE_API_ASSET_URL || 'http://localhost:5000' : window.location.origin;
   return new URL('/' + url.replace(/^\/+/, ''), new URL(base, window.location.origin)).href;
 }
 

@@ -1,4 +1,6 @@
 const path = require('path');
+const { tmpdir } = require('node:os');
+const { hasCloudinaryConfig } = require('../config/cloudinary');
 const fs = require('fs');
 const multer = require('multer');
 const { randomUUID: uuid } = require('node:crypto');
@@ -6,14 +8,21 @@ const ApiError = require('../utils/apiError');
 
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png']);
 const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png']);
-const UPLOADS_DIR = path.resolve(__dirname, '../../uploads');
+const UPLOADS_DIR = process.env.VERCEL
+  ? path.join(tmpdir(), 'urbanbuddy-uploads')
+  : path.resolve(__dirname, '../../uploads');
 
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
+  destination: (_req, _file, cb) => {
+    if (process.env.VERCEL && !hasCloudinaryConfig) {
+      return cb(new ApiError(503, 'Photo storage is unavailable'));
+    }
+    return cb(null, UPLOADS_DIR);
+  },
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `${uuid()}${ext}`);

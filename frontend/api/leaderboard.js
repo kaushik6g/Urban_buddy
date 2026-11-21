@@ -7,9 +7,9 @@ export default async function handler(req, res) {
   const authorization = req.headers.authorization;
   if (!authorization?.startsWith('Bearer ')) return res.status(401).end();
 
-  const api = process.env.VITE_API_URL;
+  const api = 'https://urban-buddy-api.vercel.app/api';
   const key = process.env.URBANBUDDY_SUPABASE_SECRET;
-  if (!api || !key) return res.status(503).end();
+  if (!key) return res.status(503).end();
   try {
     const session = await fetch(api.replace(/\/$/, '') + '/users/profile', {
       headers: { Authorization: authorization }, redirect: 'error', signal: AbortSignal.timeout(10000)

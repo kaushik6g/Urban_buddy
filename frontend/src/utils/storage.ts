@@ -1,7 +1,7 @@
 import type { User } from '../types';
 
-const TOKEN_KEY = 'urbanbuddy_token';
-const USER_KEY = 'urbanbuddy_user';
+const TOKEN_KEY = 'urbanbuddy_vercel_token';
+const USER_KEY = 'urbanbuddy_vercel_user';
 
 export const storage = {
   getToken: () => localStorage.getItem(TOKEN_KEY),
