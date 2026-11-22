@@ -27,7 +27,7 @@ const AdminProgressPage = () => {
             <summary className="cursor-pointer text-sm">
               <div>
                 <p className="font-semibold text-ink">{item.title}</p>
-                <p className="mt-0.5 text-xs text-muted">{item.category} � Reported by {item.createdByUser?.name || "Unknown reporter"}</p>
+                <p className="mt-0.5 text-xs text-muted">{item.category} &middot; Reported by {item.createdByUser?.name || "Unknown reporter"}</p>
                 {item.progressNote && <p className="mt-1 text-xs text-leaf">Update: {item.progressNote}</p>}
               </div>
               <p className="rounded-full bg-paper px-2 py-1 text-xs text-muted">{item.status}</p>
