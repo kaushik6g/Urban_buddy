@@ -7,10 +7,18 @@ const { generateUniqueCommunityCode } = require('../utils/community');
 
 const ADMIN_ALLOWED_STATUS = ['Approved', 'In Progress', 'Resolved', 'Rejected'];
 
-const getAllComplaints = asyncHandler(async (_req, res, next) => {
-  const { data, error } = await supabase
-    .from('complaints')
-    .select('*, users(name, email)')
+async function communityComplaints(adminId) {
+  const { data: admin, error } = await supabase.from('users')
+    .select('community_id').eq('id', adminId).eq('role', 'admin').maybeSingle();
+  if (error) throw error;
+  if (!admin?.community_id) throw new ApiError(403, 'Community administrator required');
+  return { query: supabase.from('complaints').select('*, users!inner(name,email,community_id)')
+    .eq('users.community_id', admin.community_id) };
+}
+
+const getAllComplaints = asyncHandler(async (req, res, next) => {
+  const { query } = await communityComplaints(req.user.id);
+  const { data, error } = await query
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -31,141 +39,37 @@ const getAllComplaints = asyncHandler(async (_req, res, next) => {
   });
 });
 
-const approveComplaint = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
+function reviewComplaint(decision) {
+  return asyncHandler(async (req, res, next) => {
+    const { query } = await communityComplaints(req.user.id);
+    const { data: complaint, error } = await query.eq('id', req.params.id).maybeSingle();
+    if (error) throw error;
+    if (!complaint) return next(new ApiError(404, 'Complaint not found'));
 
-  const { data: complaint, error: findError } = await supabase
-    .from('complaints')
-    .select('*')
-    .eq('id', id)
-    .single();
+    const status = decision || req.body.status;
+    const note = String(decision === 'Rejected' ? req.body.note || '' : req.body.progressNote || '').trim();
+    if (!ADMIN_ALLOWED_STATUS.includes(status) || ((!decision || decision === 'Rejected') && !note)) {
+      return next(new ApiError(400, 'Valid status and review comment required'));
+    }
+    const eligible = decision ? complaint.status === 'Pending'
+      : complaint.status !== 'Pending' && complaint.status !== 'Rejected';
+    if (!eligible) return next(new ApiError(400, 'This decision is unavailable for the current status'));
 
-  if (findError || !complaint) {
-    return next(new ApiError(404, 'Complaint not found'));
-  }
-
-  if (complaint.status !== 'Pending') {
-    return next(new ApiError(400, 'Only pending complaints can be approved'));
-  }
-
-  const { data: updated, error: updateError } = await supabase
-    .from('complaints')
-    .update({ status: 'Approved', reviewed_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('status', complaint.status)
-    .select('*')
-    .single();
-
-  if (updateError) {
-    return next(new ApiError(500, updateError.message));
-  }
-
-
-  return res.status(200).json({
-    success: true,
-    message: `Complaint approved. ${APPROVAL_POINTS} points awarded.`,
-    data: await mapComplaint(updated),
+    const result = await supabase.rpc('review_community_complaint', {
+      p_admin: req.user.id, p_report: complaint.id, p_expected: complaint.status,
+      p_status: status, p_note: note,
+    }).maybeSingle();
+    if (result.error) throw result.error;
+    if (!result.data) return next(new ApiError(409, 'Complaint changed. Refresh before reviewing.'));
+    const message = decision === 'Approved' ? `Complaint approved. ${APPROVAL_POINTS} points awarded.`
+      : decision === 'Rejected' ? 'Complaint rejected' : 'Complaint status updated';
+    return res.json({ success: true, message, data: await mapComplaint(result.data) });
   });
-});
+}
 
-const rejectComplaint = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const note = String(req.body.note || '').trim();
-
-  if (!note) {
-    return next(new ApiError(400, 'Reject note is mandatory'));
-  }
-
-  const { data: complaint, error: findError } = await supabase
-    .from('complaints')
-    .select('id, status')
-    .eq('id', id)
-    .single();
-
-  if (findError || !complaint) {
-    return next(new ApiError(404, 'Complaint not found'));
-  }
-
-  if (complaint.status !== 'Pending') {
-    return next(new ApiError(400, 'Only pending complaints can be rejected'));
-  }
-
-  const { data, error } = await supabase
-    .from('complaints')
-    .update({
-      status: 'Rejected',
-      admin_note: note,
-      reviewed_at: new Date().toISOString(),
-    })
-    .eq('id', id)
-    .eq('status', complaint.status)
-    .select('*')
-    .single();
-
-  if (error || !data) {
-    return next(new ApiError(404, 'Complaint not found'));
-  }
-
-  return res.status(200).json({
-    success: true,
-    message: 'Complaint rejected',
-    data: await mapComplaint(data),
-  });
-});
-
-const updateComplaintStatus = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const { status } = req.body;
-  const progressNote = String(req.body.progressNote || '').trim();
-
-  if (!progressNote) return next(new ApiError(400, 'A status comment is required'));
-
-  if (!ADMIN_ALLOWED_STATUS.includes(status)) {
-    return next(new ApiError(400, 'Invalid status value'));
-  }
-
-  const { data: existing, error: existingError } = await supabase
-    .from('complaints')
-    .select('id, status')
-    .eq('id', id)
-    .single();
-
-  if (existingError || !existing) {
-    return next(new ApiError(404, 'Complaint not found'));
-  }
-
-  if (existing.status === 'Pending' || existing.status === 'Rejected') {
-    return next(new ApiError(400, 'Approve complaint first before updating progress status'));
-  }
-
-  const updatePayload = {
-    status,
-    updated_at: new Date().toISOString(),
-  };
-
-  if (progressNote) {
-    updatePayload.progress_note = progressNote;
-    if (status === 'Rejected') updatePayload.admin_note = progressNote;
-  }
-
-  const { data, error } = await supabase
-    .from('complaints')
-    .update(updatePayload)
-    .eq('id', id)
-    .eq('status', existing.status)
-    .select('*')
-    .single();
-
-  if (error || !data) {
-    return next(new ApiError(404, 'Complaint not found'));
-  }
-
-  return res.status(200).json({
-    success: true,
-    message: 'Complaint status updated',
-    data: await mapComplaint(data),
-  });
-});
+const approveComplaint = reviewComplaint('Approved');
+const rejectComplaint = reviewComplaint('Rejected');
+const updateComplaintStatus = reviewComplaint();
 
 const getMyCommunity = asyncHandler(async (req, res, next) => {
   const { data: user, error: userError } = await supabase
