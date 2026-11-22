@@ -13,19 +13,18 @@ export default function PortalLayout({ portal, links }: Props) {
     <div className="min-h-screen">
       <a href="#content" className="sr-only focus:not-sr-only">Skip to content</a>
       <header className="bg-[#18392e] text-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-8">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 px-4 py-2 sm:px-8">
           <div className="flex flex-wrap items-baseline gap-x-3">
             <span className="text-xl font-bold tracking-tight">UrbanBuddy</span>
             <span className="text-sm text-[#c8dbd2]">{portal}</span>
           </div>
-          <div className="flex shrink-0 items-center gap-4 text-sm">
-            <span className="hidden text-[#c8dbd2] sm:inline">{user?.name}</span>
+          <div className="flex min-w-0 items-center gap-4 text-sm lg:order-3">
+            <span className="hidden max-w-40 truncate text-[#c8dbd2] sm:inline">{user?.name}</span>
             <button onClick={logout} type="button" className="flex items-center gap-2 rounded-sm py-2 font-medium hover:underline">
               <LogOut size={15} aria-hidden="true" /> Sign out
             </button>
           </div>
-        </div>
-        <nav aria-label={portal} className="mx-auto flex max-w-6xl flex-wrap gap-x-4 px-4 sm:gap-x-7 sm:px-8">
+        <nav aria-label={portal} className="flex w-full flex-wrap gap-x-4 sm:gap-x-6 lg:w-auto">
           {links.map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} end className={({ isActive }) =>
               'inline-flex items-center gap-2 border-b-2 py-3 text-sm font-medium ' +
@@ -35,8 +34,9 @@ export default function PortalLayout({ portal, links }: Props) {
             </NavLink>
           ))}
         </nav>
+        </div>
       </header>
-      <main id="content" tabIndex={-1} className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-9">
+      <main id="content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-5 sm:px-8 sm:py-6">
         <Outlet />
       </main>
     </div>
