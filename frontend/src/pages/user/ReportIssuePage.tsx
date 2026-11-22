@@ -61,6 +61,7 @@ const ReportIssuePage = () => {
       images.forEach((file) => formData.append('images', file));
 
       const response = await complaintApi.create(formData);
+      window.dispatchEvent(new Event('complaint-created'));
       form.reset();
       setCategory(categories[0]);
       setGps({});
