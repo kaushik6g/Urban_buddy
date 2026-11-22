@@ -18,6 +18,7 @@ interface AuthContextValue {
     communityName?: string,
     communityCode?: string
   ) => Promise<User>;
+  updateName: (name: string) => void;
   logout: () => void;
 }
 
@@ -91,6 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isAuthenticated: Boolean(user && token),
       login,
       register,
+      updateName: (name: string) => setUser(current => current && { ...current, name }),
       logout,
     }),
     [user, token, loading]
