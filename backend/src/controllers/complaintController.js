@@ -39,7 +39,10 @@ const createComplaint = asyncHandler(async (req, res, next) => {
     .eq('created_by', req.user.id)
     .eq('title', title)
     .eq('category', category)
+    .eq('latitude', Number(latitude))
+    .eq('longitude', Number(longitude))
     .in('status', ['Pending', 'Approved', 'In Progress'])
+    .limit(1)
     .maybeSingle();
 
   if (duplicateError) {
