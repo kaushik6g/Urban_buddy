@@ -1,4 +1,3 @@
-import api from '../../api/client';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
@@ -6,33 +5,44 @@ import Card from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { useAuth } from '../../hooks/useAuth';
 
+// These values only prefill the form. Registration validates the community code on the server.
+function readInvitation(): { email?: string; code?: string; error?: string } | undefined {
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const error = 'This invitation is invalid or has expired. Ask your admin for a fresh invitation.';
+  if (params.has('error') || params.has('error_code')) return { error };
+  const token = params.get('access_token');
+  if (!token) return window.history.state?.urbanBuddyInvite as { email: string; code: string } | undefined;
+  try {
+    const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const claims = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(payload), c => c.charCodeAt(0))));
+    const code = claims.user_metadata?.communityCode;
+    if (claims.exp <= Date.now() / 1000 || typeof claims.email !== 'string' || typeof code !== 'string' || !code.trim()) return { error };
+    return { email: claims.email as string, code: code.trim() };
+  } catch {
+    return { error };
+  }
+}
+
 const RegisterPage = () => {
   const navigate = useNavigate();
   const { register, loading } = useAuth();
 
+  const [invite] = useState(readInvitation);
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(invite?.email || '');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'user' | 'admin'>('user');
   const [communityName, setCommunityName] = useState('');
-  const [communityCode, setCommunityCode] = useState('');
-  const [error, setError] = useState('');
+  const [communityCode, setCommunityCode] = useState(invite?.code || '');
+  const [error, setError] = useState(invite && 'error' in invite ? invite.error || '' : '');
 
-  const [inviteToken] = useState(() => new URLSearchParams(window.location.hash.slice(1)).get('access_token'));
   useEffect(() => {
-    if (!inviteToken) return;
-    window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
-    let active = true;
-    api.post('/auth/invitation', { accessToken: inviteToken }).then(({ data }) => {
-      if (active) {
-        setEmail(data.email);
-        setCommunityCode(data.code);
-      }
-    }).catch(() => {
-      if (active) setError('Could not load the invitation. Ask your admin for the community code.');
-    });
-    return () => { active = false; };
-  }, [inviteToken]);
+    if (!invite || !window.location.hash) return;
+    window.history.replaceState(
+      { ...window.history.state, urbanBuddyInvite: invite.email ? { email: invite.email, code: invite.code } : undefined },
+      '', window.location.pathname + window.location.search
+    );
+  }, [invite]);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
