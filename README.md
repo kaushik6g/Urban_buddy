@@ -1,220 +1,98 @@
-# UrbanBuddy - Smart Civic Issue Reporting Platform
+# UrbanBuddy
 
-UrbanBuddy is a full-stack civic issue reporting app with user rewards, moderation workflows, and admin operations.
+UrbanBuddy helps people in a campus, residential community, or workplace report local problems and follow them through resolution. A resident can report a leaking pipe with a photo and location. Their community admin can review the evidence, record what is being done, and tell the reporter when the repair is complete.
 
-## Stack
+[Open UrbanBuddy](https://urban-buddy-delta.vercel.app/) · [API health check](https://urban-buddy-api.vercel.app/api/health)
 
-- Frontend: React + Vite + Tailwind CSS + Axios + React Router
-- Backend: Node.js + Express + JWT + Multer + Cloudinary (optional)
-- Database: Supabase (PostgreSQL)
+## How a report moves through the app
 
-## Project Structure
+1. **Join a community.** An admin registers a community and chooses a permanent invite code or lets UrbanBuddy generate one. Citizens enter the code at registration. Returning users sign in with email and password.
+2. **Report an issue.** The citizen adds a title, description, category, and coordinates from GPS or manual entry. They can include an address and JPEG or PNG photos. New reports enter the review queue as **Pending**.
+3. **Review and track the work.** The community admin approves or rejects the report. After approval, the admin can mark it **In Progress** or **Resolved** and leave a comment. Rejections include a reason.
+4. **Follow the outcome.** The citizen dashboard shows status counts, recent reports, and a dated feed of decisions and point changes. Profile holds the full issue details, rejected reports, and deletion history.
 
-```text
-Urban Buddy/
-  backend/
-    src/
-      config/
-      controllers/
-      middleware/
-      routes/
-      services/
-      utils/
-      app.js
-      server.js
-    supabase/
-      schema.sql
-    uploads/
-    .env.example
-    package.json
-  frontend/
-    src/
-      api/
-      components/
-      contexts/
-      hooks/
-      pages/
-      types/
-      utils/
-      App.tsx
-      main.tsx
-    .env.example
-    package.json
-```
+Approval awards **15 points**. Resolving an approved report adds **35**, bringing its total to **50**. Rejecting or deleting a report removes the points it earned. The community leaderboard ranks citizen accounts by points.
 
-## 1. Supabase Setup
+## Architecture
 
-1. Create a Supabase project.
-2. Open SQL Editor in Supabase.
-3. Run SQL from `backend/supabase/schema.sql`.
-4. Copy `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
+| Part | Implementation | Responsibility |
+| --- | --- | --- |
+| Citizen and admin portals | React, TypeScript, Vite, Tailwind CSS | Reporting, review, filters, profile, and dashboards |
+| Application API | Node.js, Express, JWT, bcrypt, Multer | Authentication, community-scoped admin review, and uploads |
+| Database | PostgreSQL on Supabase | Communities, accounts, complaints, review history, and rewards |
+| Photos | Supabase Storage on Vercel by default | Private complaint photos served through signed links |
 
-## 2. Environment Variables
+The frontend and API deploy as separate Vercel projects. In production, the browser sends application requests through the frontend’s `/backend-api` rewrite. A separate server-side function serves the community leaderboard. Local development uses the Express API directly.
 
-Create `backend/.env` from `backend/.env.example`:
+## Run locally
 
-```env
-PORT=5000
-NODE_ENV=development
+Use Node.js 22.12+ and npm. Clone the repository and open two terminals at its root.
+
+### 1. Prepare a development database
+
+Create a Supabase project and run the following files in its SQL Editor, in the order shown. This sequence is for a **fresh database**. Some migrations backfill existing rows and replace earlier functions.
+
+| Order | SQL file | Purpose |
+| --- | --- | --- |
+| 1 | [schema.sql](backend/supabase/schema.sql) | Base tables and relationships |
+| 2 | [switch community](backend/supabase/20261121_switch_community.sql) | Confirmed community transfers |
+| 3 | [archive complaints](backend/supabase/20261122_archive_complaints.sql) | Per-user deletion history |
+| 4 | [deduct deleted points](backend/supabase/20261122_deduct_deleted_points.sql) | Reverse rewards on deletion |
+| 5 | [reward events](backend/supabase/20261122_reward_events.sql) | Track earned points and complaint updates |
+| 6 | [revoke rejected points](backend/supabase/20261122_revoke_rejected_points.sql) | Reverse rewards on rejection |
+| 7 | [complaint identity views](backend/supabase/20261122_complaint_identity_views.sql) | Restricted reporter and deletion lookups |
+| 8 | [scope complaint reviews](backend/supabase/20261122_scope_complaint_reviews.sql) | Check community membership during review writes |
+
+### 2. Start the API
+
+Create `backend/.env` using the following values. Generate a private signing secret for `JWT_SECRET`. Keep it and the Supabase server key out of Git and browser-exposed variables.
+
+```dotenv
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVER_KEY
+JWT_SECRET=YOUR_RANDOM_SIGNING_SECRET
 CLIENT_URL=http://localhost:5173
-
-SUPABASE_URL=https://your-project-ref.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-
-JWT_SECRET=super-secret-jwt-key
-JWT_EXPIRES_IN=7d
-
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
+PORT=5000
 ```
 
-Create `frontend/.env` from `frontend/.env.example`:
-
-```env
-VITE_API_URL=http://localhost:5000/api
-VITE_API_ASSET_URL=http://localhost:5000
-```
-
-## 3. Install Dependencies
-
-```bash
+```sh
 cd backend
-npm install
-
-cd ../frontend
-npm install
-```
-
-## 4. Start the App
-
-Backend:
-
-```bash
-cd backend
+npm ci
 npm run dev
 ```
 
-Frontend:
+Check that the API starts successfully at [localhost:5000/api/health](http://localhost:5000/api/health).
 
-```bash
+### 3. Start the frontend
+
+Use the second terminal to start Vite.
+
+```sh
 cd frontend
+npm ci
 npm run dev
 ```
 
-## 5. Create an Admin User
+Open the local URL printed by Vite, normally [localhost:5173](http://localhost:5173). The default API address is `http://localhost:5000/api`. To use another local port, set `VITE_API_URL` and `VITE_API_ASSET_URL` in `frontend/.env`.
 
-1. Register a user via `/register`.
-2. In Supabase SQL editor:
+### 4. Try both roles
 
-```sql
-update public.users
-set role = 'admin'
-where email = 'admin@urbanbuddy.com';
-```
+Register an **Admin** and copy the community invite code. In a second browser profile, register a **User** with that code and submit a report. In the admin session, open **Complaint Review**, approve the report, then mark it **Resolved** with a comment. The citizen dashboard should show the comment and a total of 50 points for that report. Deleting it from Profile should move it to **Deleted complaints** and reverse those points.
 
-## API Endpoints
+## Deployment
 
-### Auth
+- **API project** — Set the Vercel root directory to `backend`. Configure `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, and the deployed frontend origin in `CLIENT_URL`.
+- **Frontend project** — Set the root directory to `frontend`, use the Vite preset, build with `npm run build`, and publish `dist`. Set `URBANBUDDY_SUPABASE_SECRET` as a server-side environment variable for the leaderboard function.
+- **Deploying a fork** — Update the API destination in [vercel.json](frontend/vercel.json) and the API and Supabase URLs in [leaderboard.js](frontend/api/leaderboard.js) to point to your deployments.
+- **Photo storage** — Local uploads use the backend’s uploads directory. On Vercel, the API creates the private `urbanbuddy-complaint-photos` bucket on first upload if needed. Optional Cloudinary configuration takes precedence. [Storage implementation](backend/src/services/storageService.js)
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
+## Working in the repository
 
-### User
+| Directory | Contents |
+| --- | --- |
+| [frontend/src](frontend/src) | Pages, shared components, authentication state, and API client |
+| [frontend/api](frontend/api) | Server-side Vercel functions for the frontend project |
+| [backend/src](backend/src) | Express routes, controllers, middleware, and services |
+| [backend/supabase](backend/supabase) | Base schema and ordered SQL migrations |
 
-- `GET /api/users/profile`
-- `GET /api/users/leaderboard`
-
-### Complaints
-
-- `POST /api/complaints`
-- `GET /api/complaints`
-- `GET /api/complaints/my`
-
-### Admin
-
-- `GET /api/admin/complaints`
-- `PUT /api/admin/complaints/:id/approve`
-- `PUT /api/admin/complaints/:id/reject`
-- `PUT /api/admin/complaints/:id/status`
-
-## Sample Requests
-
-### Register
-
-```http
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "name": "John Citizen",
-  "email": "john@example.com",
-  "password": "secure123"
-}
-```
-
-Example response:
-
-```json
-{
-  "success": true,
-  "message": "Account created successfully",
-  "token": "<jwt>",
-  "user": {
-    "id": "uuid",
-    "name": "John Citizen",
-    "email": "john@example.com",
-    "role": "user",
-    "points": 0,
-    "createdAt": "2026-03-22T10:00:00.000Z"
-  }
-}
-```
-
-### Login
-
-```http
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "email": "john@example.com",
-  "password": "secure123"
-}
-```
-
-### Create Complaint (with image)
-
-```http
-POST /api/complaints
-Authorization: Bearer <jwt>
-Content-Type: multipart/form-data
-
-- title: Broken Streetlight near metro station
-- description: Streetlight has been non-functional for 4 days and area is unsafe at night.
-- category: Streetlight
-- latitude: 28.6139
-- longitude: 77.2090
-- address: Connaught Place, New Delhi
-- image: [binary file]
-```
-
-### Approve Complaint (Admin)
-
-```http
-PUT /api/admin/complaints/<id>/approve
-Authorization: Bearer <admin_jwt>
-```
-
-## Key Features Implemented
-
-- JWT auth with role-based route protection
-- Password hashing with bcryptjs
-- Supabase-backed persistent data model
-- Multer image upload + optional Cloudinary
-- Reward points on complaint approval
-- Leaderboard endpoint and frontend UI
-- Duplicate complaint prevention for active issues
-- Pagination and filtering in public complaints
-- Admin panel for approve/reject/status updates
-- Responsive modern UI with user and admin experiences
+Run `npm run build` from `frontend` to type-check and build the production bundle. Run `npm run lint` there for ESLint checks. For the API contract, start with the [Express routes](backend/src/routes).
