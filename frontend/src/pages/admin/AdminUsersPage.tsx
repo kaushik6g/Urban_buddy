@@ -7,6 +7,15 @@ const AdminUsersPage = () => {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
   const [email, setEmail] = useState('');
+  const [link, setLink] = useState('');
+  const [notice, setNotice] = useState('');
+  const revoke = async () => {
+    try {
+      await api.delete('/admin/invitations', {data:{email}});
+      setLink('');
+      setNotice('Any pending invitation for this address has been revoked.');
+    } catch { setNotice('Could not revoke the invitation.'); }
+  };
   const load = () => {
     userApi
       .leaderboard()
@@ -18,6 +27,12 @@ const AdminUsersPage = () => {
     if (action === 'remove' && !window.confirm('Remove this user from the community?')) return;
     try {
       const response = await api.post('/admin/members', {action, email, id});
+      if (response.data?.token) {
+        setLink(window.location.origin + '/register#invite=' + response.data.token);
+        setNotice('Share this link privately. It expires in seven days.');
+        return;
+      }
+      setLink('');
       if (response.data?.message) window.alert(response.data.message);
       setEmail('');
       load();
@@ -27,8 +42,10 @@ const AdminUsersPage = () => {
   return (
     <div className="space-y-5"><Card><h2 className="text-2xl font-semibold">Community users</h2>
       <form className="my-4 flex flex-wrap gap-2" onSubmit={event => {event.preventDefault(); void manage("add");}}>
-        <input required type="email" aria-label="Member email" placeholder="User email" value={email} onChange={event => setEmail(event.target.value)} className="rounded border border-line px-3 py-2" /><button>Add user</button>
+        <input required type="email" aria-label="Member email" placeholder="User email" value={email} onChange={event => {setEmail(event.target.value); setLink(''); setNotice('');}} className="rounded border border-line px-3 py-2" /><button>Add user or create invite link</button><button type="button" disabled={!email} onClick={revoke}>Revoke invite</button>
       </form>
+      {link && <div><input aria-label="Invitation link" readOnly value={link} onFocus={e => e.target.select()} /><button onClick={async () => {try {await navigator.clipboard.writeText(link); setNotice('Link copied.');} catch {setNotice('Select the link and copy it manually.');}}}>Copy invite link</button></div>}
+      <p role="status">{notice}</p>
       {leaderboard.map(member => <div key={member.id} className="flex justify-between border-t border-line py-2">{member.name}<button className="text-red-800" onClick={() => manage("remove", member.id)}>Remove</button></div>)}
     </Card><Card>
       <h2 className="text-2xl font-semibold tracking-tight text-ink">Leaderboard</h2>
