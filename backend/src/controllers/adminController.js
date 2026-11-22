@@ -46,8 +46,9 @@ function reviewComplaint(decision) {
     if (error) throw error;
     if (!complaint) return next(new ApiError(404, 'Complaint not found'));
 
-    const status = decision || req.body.status;
-    const note = String(decision === 'Rejected' ? req.body.note || '' : req.body.progressNote || '').trim();
+    const { status: requestedStatus, note: rejectionNote, progressNote } = req.body || {};
+    const status = decision || requestedStatus;
+    const note = String(decision === 'Rejected' ? rejectionNote || '' : progressNote || '').trim();
     if (!ADMIN_ALLOWED_STATUS.includes(status) || ((!decision || decision === 'Rejected') && !note)) {
       return next(new ApiError(400, 'Valid status and review comment required'));
     }
