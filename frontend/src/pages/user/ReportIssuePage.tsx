@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { complaintApi } from '../../api/services';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
@@ -15,6 +15,7 @@ const ReportIssuePage = () => {
   const [address, setAddress] = useState('');
   const [gps, setGps] = useState<{ latitude?: number; longitude?: number }>({});
   const [images, setImages] = useState<File[]>([]);
+  const submitting = useRef(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -43,6 +44,8 @@ const ReportIssuePage = () => {
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     setError('');
     const form = event.currentTarget as HTMLFormElement;
     setLoading(true);
@@ -71,6 +74,7 @@ const ReportIssuePage = () => {
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Submission failed');
     } finally {
+      submitting.current = false;
       setLoading(false);
     }
   };
