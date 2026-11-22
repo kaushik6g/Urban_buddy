@@ -1,3 +1,4 @@
+import api from '../../api/client';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
@@ -27,6 +28,7 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const { register, loading } = useAuth();
 
+  const [linkToken] = useState(() => new URLSearchParams(window.location.hash.slice(1)).get('invite'));
   const [invite] = useState(readInvitation);
   const [name, setName] = useState('');
   const [email, setEmail] = useState(invite?.email || '');
@@ -37,18 +39,30 @@ const RegisterPage = () => {
   const [error, setError] = useState(invite && 'error' in invite ? invite.error || '' : '');
 
   useEffect(() => {
+    if (linkToken) {
+      let active = true;
+      api.post('/auth/invite-details', {token:linkToken}).then(({data}) => {
+        if (active) { setEmail(data.email); setCommunityCode(data.code); }
+      }).catch(() => { if (active) setError('Invitation unavailable. Ask your admin for a new link.'); });
+      return () => { active = false; };
+    }
     if (!invite || !window.location.hash) return;
     window.history.replaceState(
       { ...window.history.state, urbanBuddyInvite: invite.email ? { email: invite.email, code: invite.code } : undefined },
       '', window.location.pathname + window.location.search
     );
-  }, [invite]);
+  }, [invite, linkToken]);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
 
     try {
+      if (linkToken) {
+        await api.post('/auth/register', { name, email, password, role:'user', inviteToken:linkToken });
+        navigate('/login', {replace:true});
+        return;
+      }
       const createdUser = await register(
         name,
         email,
@@ -77,7 +91,7 @@ const RegisterPage = () => {
             Email
             <Input
               type="email"
-              value={email}
+              readOnly={Boolean(linkToken)} value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
@@ -97,7 +111,7 @@ const RegisterPage = () => {
               <span className="mb-1 block text-xs font-semibold text-muted">Account Type</span>
               <select
                 className="w-full bg-transparent outline-none"
-                value={role}
+                disabled={Boolean(linkToken || invite)} value={role}
                 onChange={(e) => { setRole(e.target.value as 'user' | 'admin'); setCommunityCode(''); }}
               >
                 <option value="user">User</option>
@@ -124,7 +138,7 @@ const RegisterPage = () => {
                 Community code
                 <Input
                   required
-                  value={communityCode}
+                  readOnly={Boolean(linkToken)} value={communityCode}
                   onChange={(e) => setCommunityCode(e.target.value.toUpperCase())}
                 />
               </label>
