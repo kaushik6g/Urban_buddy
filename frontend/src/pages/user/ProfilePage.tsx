@@ -1,7 +1,7 @@
 import api from '../../api/client';
 import { useAuth } from '../../hooks/useAuth';
 import ComplaintPhoto from '../../components/ui/ComplaintPhoto';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { complaintApi, userApi } from '../../api/services';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -49,6 +49,7 @@ const ProfilePage = () => {
     setDeleteFeedback('');
     try {
       await complaintApi.remove(id);
+      ++historyRequest.current;
       setComplaints((current) => current.filter((complaint) => complaint.id !== id));
       loadDeleted();
       loadProfile();
@@ -61,9 +62,18 @@ const ProfilePage = () => {
   };
 
   const [detailsError, setDetailsError] = useState(false);
+  const historyRequest = useRef(0);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const loadDetails = () => {
+    const request = ++historyRequest.current;
     setDetailsError(false);
-    complaintApi.my().then(({ data }) => setComplaints(data.data)).catch(() => setDetailsError(true));
+    complaintApi.my().then(({ data }) => {
+      if (request === historyRequest.current) setComplaints(data.data);
+    }).catch(() => {
+      if (request === historyRequest.current) setDetailsError(true);
+    }).finally(() => {
+      if (request === historyRequest.current) setHistoryLoading(false);
+    });
   };
   const [profile, setProfile] = useState<any>(null);
   const [showChange, setShowChange] = useState(false);
@@ -84,6 +94,13 @@ const ProfilePage = () => {
     loadProfile();
     loadDetails();
     loadDeleted();
+    window.addEventListener('complaint-created', loadDetails);
+    window.addEventListener('focus', loadDetails);
+    return () => {
+      ++historyRequest.current;
+      window.removeEventListener('complaint-created', loadDetails);
+      window.removeEventListener('focus', loadDetails);
+    };
   }, []);
 
   const onJoinCommunity = async (event: React.FormEvent) => {
@@ -227,7 +244,8 @@ const ProfilePage = () => {
           {deleteFeedback && <p role="status" className="text-sm">{deleteFeedback}</p>}
           {detailsError && <button type="button" onClick={loadDetails}>Retry loading complaints</button>}
       {activeComplaints.map(renderComplaint)}
-          {!detailsError && !activeComplaints.length && <p className="text-sm text-muted">No activity yet.</p>}
+          {historyLoading && <p role="status">Loading activity…</p>}
+          {!historyLoading && !detailsError && !activeComplaints.length && <p className="text-sm text-muted">No activity yet.</p>}
         </div>
       </Card>
       <Card>
