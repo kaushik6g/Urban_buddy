@@ -1,3 +1,5 @@
+import api from '../../api/client';
+import { useAuth } from '../../hooks/useAuth';
 import ComplaintPhoto from '../../components/ui/ComplaintPhoto';
 import { useEffect, useState } from 'react';
 import { complaintApi, userApi } from '../../api/services';
@@ -6,6 +8,27 @@ import Badge from '../../components/ui/Badge';
 import type { Complaint } from '../../types';
 
 const ProfilePage = () => {
+  const { updateName } = useAuth();
+  const [draftName, setDraftName] = useState<string | null>(null);
+  const [savingName, setSavingName] = useState(false);
+  const [nameMessage, setNameMessage] = useState('');
+  const saveName = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!draftName?.trim() || savingName) return;
+    setSavingName(true);
+    setNameMessage('');
+    try {
+      const { data } = await api.patch('/users/profile', { name: draftName.trim() });
+      setProfile((current: typeof profile) => ({ ...current, user: { ...current.user, name: data.data.name } }));
+      updateName(data.data.name);
+      setDraftName(null);
+      setNameMessage('Name saved.');
+    } catch {
+      setNameMessage('Could not save your name. Please try again.');
+    } finally {
+      setSavingName(false);
+    }
+  };
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleted, setDeleted] = useState<{ id: string; title: string; deleted_at: string }[]>([]);
@@ -129,13 +152,22 @@ const ProfilePage = () => {
   );
 
   return (
-    <div className="grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
-      <Card className="border-t-4 border-t-leaf">
+    <div className="grid items-start gap-5 md:grid-cols-2">
+      <Card className="border-t-4 border-t-leaf md:col-span-2">
         <h2 className="text-2xl font-semibold tracking-tight text-ink">Profile</h2>
-        <div className="mt-4 space-y-2 text-sm text-ink">
-          <p>
-            <span className="font-semibold">Name:</span> {profile.user.name}
-          </p>
+        <div className="mt-3 grid gap-2 text-sm text-ink sm:grid-cols-2 lg:grid-cols-3">
+          {draftName === null ? (
+            <p><strong>Name:</strong> {profile.user.name} <button type="button" className="ml-2 text-leaf underline" onClick={() => { setDraftName(profile.user.name); setNameMessage(''); }}>Edit name</button></p>
+          ) : (
+            <form onSubmit={saveName} className="flex flex-wrap items-end gap-2">
+              <label className="grid gap-1">Name
+                <input autoFocus required maxLength={80} className="rounded border border-line px-2 py-1" value={draftName} onChange={e => setDraftName(e.target.value)} />
+              </label>
+              <button disabled={savingName || !draftName.trim()} className="font-semibold text-leaf">Save</button>
+              <button type="button" disabled={savingName} onClick={() => { setDraftName(null); setNameMessage(''); }}>Cancel</button>
+            </form>
+          )}
+          {nameMessage && <p role="status">{nameMessage}</p>}
           <p>
             <span className="font-semibold">Email:</span> {profile.user.email}
           </p>
@@ -189,7 +221,7 @@ const ProfilePage = () => {
         )}
       </Card>
 
-      <Card>
+      <Card className="md:col-span-2">
         <h3 className="text-xl font-semibold tracking-tight text-ink">Activity History</h3>
         <div className="mt-3 space-y-2">
           {deleteFeedback && <p role="status" className="text-sm">{deleteFeedback}</p>}
@@ -198,7 +230,7 @@ const ProfilePage = () => {
           {!detailsError && !activeComplaints.length && <p className="text-sm text-muted">No activity yet.</p>}
         </div>
       </Card>
-      <Card className="md:col-start-2">
+      <Card>
         <h3 className="text-xl font-semibold">Rejected complaints</h3>
         <div className="mt-3 space-y-2">
           {rejectedComplaints.length ? rejectedComplaints.map(renderComplaint) : (
@@ -206,7 +238,7 @@ const ProfilePage = () => {
           )}
         </div>
       </Card>
-      <Card className="md:col-start-2">
+      <Card>
         <h3 className="text-xl font-semibold">Deleted complaints</h3>
         {archiveError ? <button type="button" onClick={loadDeleted}>Retry loading deleted complaints</button> : deleted.length ? (
           <ul className="mt-3 divide-y divide-line">
