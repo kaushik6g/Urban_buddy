@@ -30,18 +30,26 @@ router.post('/members', require('../utils/asyncHandler')(async (req, res) => {
     const existing = await db.from('users').select('id').eq('email', email).maybeSingle();
     if (existing.error) throw existing.error;
     if (!existing.data) {
-      const community = await db.from('communities').select('code').eq('id', admin.community_id).single();
-      if (community.error) throw community.error;
-      const invite = await db.auth.admin.inviteUserByEmail(email, {
-        redirectTo: process.env.REGISTRATION_URL || 'https://urban-buddy-delta.vercel.app/register',
-        data: { communityCode: community.data.code },
-      });
-      if (invite.error) return res.status(400).json({ message: 'Invitation could not be sent. Check the email and Supabase email settings.' });
-      return res.status(201).json({ message: 'Invitation sent. The registration link fills in the community code.' });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({message:'Enter a valid email.'});
+      const crypto = require('node:crypto');
+      const token = crypto.randomBytes(32).toString('hex');
+      const digest = crypto.createHash('sha256').update(token).digest('hex');
+      const expires_at = new Date(Date.now() + 7 * 86400000).toISOString();
+      const saved = await db.from('community_invites').upsert({community_id: admin.community_id, email, digest, expires_at}, {onConflict:'community_id,email'});
+      if (saved.error) throw saved.error;
+      return res.set('Cache-Control','no-store').status(201).json({token, email});
     }
   }
   if (!result.data) return res.status(409).json({message:'No eligible member found'});
   return res.status(204).end();
+}));
+router.delete('/invitations', require('../utils/asyncHandler')(async (req,res) => {
+  const db = require('../config/supabase');
+  const admin = await db.from('users').select('community_id').eq('id',req.user.id).single();
+  if (admin.error) throw admin.error;
+  const result = await db.from('community_invites').delete().eq('community_id',admin.data.community_id).eq('email',String(req.body.email).trim().toLowerCase());
+  if (result.error) throw result.error;
+  res.sendStatus(204);
 }));
 router.get('/complaints', getAllComplaints);
 router.get('/community', getMyCommunity);
