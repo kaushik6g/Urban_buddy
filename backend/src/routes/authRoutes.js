@@ -5,6 +5,14 @@ const validate = require('../middleware/validate');
 
 const router = express.Router();
 
+router.post('/invitation', require('../utils/asyncHandler')(async (req, res) => {
+  const token = req.body?.accessToken;
+  if (typeof token !== 'string' || !token) return res.sendStatus(400);
+  const { data, error } = await require('../config/supabase').auth.getUser(token);
+  if (error || !data.user?.invited_at || !data.user.user_metadata?.communityCode) return res.sendStatus(401);
+  res.set('Cache-Control', 'no-store').json({ email: data.user.email, code: data.user.user_metadata.communityCode });
+}));
+
 router.post(
   '/register',
   [
