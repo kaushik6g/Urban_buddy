@@ -60,6 +60,15 @@ const register = asyncHandler(async (req, res, next) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  if (req.body.inviteToken) {
+    if (role !== 'user') return next(new ApiError(400, 'Invitations are for citizen accounts only'));
+    const digest = require('node:crypto').createHash('sha256').update(String(req.body.inviteToken)).digest('hex');
+    const result = await supabase.rpc('redeem_community_invite', {p_digest:digest,p_name:name,p_email:email,p_bcrypt_hash:hashedPassword});
+    if (result.error) throw result.error;
+    if (!result.data) return next(new ApiError(410,'Invitation is unavailable. Ask your admin for a new link.'));
+    return res.status(201).json({success:true});
+  }
+
   let joinedCommunityId = null;
 
   if (role === 'user') {
