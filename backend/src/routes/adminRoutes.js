@@ -43,6 +43,17 @@ router.post('/members', require('../utils/asyncHandler')(async (req, res) => {
   if (!result.data) return res.status(409).json({message:'No eligible member found'});
   return res.status(204).end();
 }));
+router.get('/invitations', require('../utils/asyncHandler')(async (req, res) => {
+  const db = require('../config/supabase');
+  const admin = await db.from('users').select('community_id').eq('id', req.user.id).single();
+  if (admin.error) throw admin.error;
+  if (!admin.data.community_id) return res.status(403).json({message:'Community administrator required'});
+  const invites = await db.from('community_invites').select('email,expires_at')
+    .eq('community_id', admin.data.community_id).gt('expires_at', new Date().toISOString())
+    .order('expires_at', {ascending:false});
+  if (invites.error) throw invites.error;
+  res.set('Cache-Control','no-store').json(invites.data);
+}));
 router.delete('/invitations', require('../utils/asyncHandler')(async (req,res) => {
   const db = require('../config/supabase');
   const admin = await db.from('users').select('community_id').eq('id',req.user.id).single();
