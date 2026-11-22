@@ -5,6 +5,13 @@ const validate = require('../middleware/validate');
 
 const router = express.Router();
 
+router.post('/invite-details', require('../utils/asyncHandler')(async (req,res) => {
+  const digest = require('node:crypto').createHash('sha256').update(String(req.body?.token || '')).digest('hex');
+  const result = await require('../config/supabase').from('community_invites').select('email,communities(code)').eq('digest',digest).gt('expires_at',new Date().toISOString()).maybeSingle();
+  if (result.error) throw result.error;
+  if (!result.data) return res.status(410).json({message:'This invitation has expired, was revoked, or was already used.'});
+  res.set('Cache-Control','no-store').json({email:result.data.email,code:result.data.communities.code});
+}));
 router.post('/invitation', require('../utils/asyncHandler')(async (req, res) => {
   const token = req.body?.accessToken;
   if (typeof token !== 'string' || !token) return res.sendStatus(400);
