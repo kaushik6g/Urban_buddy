@@ -12,6 +12,7 @@ const DashboardPage = () => {
   const [points, setPoints] = useState(user?.points || 0);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
+  const [leaderboardMessage, setLeaderboardMessage] = useState('Loading contributors…');
   const [complaintsLoading, setComplaintsLoading] = useState(true);
   const [complaintError, setComplaintError] = useState(false);
 
@@ -37,10 +38,15 @@ const DashboardPage = () => {
     refreshComplaints();
     window.addEventListener('focus', refreshComplaints);
     const timer = window.setInterval(refreshComplaints, 15000);
+    setLeaderboard([]);
+    setLeaderboardMessage('Loading contributors…');
     userApi.leaderboard().then(({ data }) => {
-      if (active) setLeaderboard(data.data);
+      if (active) {
+        setLeaderboard(data.data);
+        setLeaderboardMessage('No contributors yet.');
+      }
     }).catch(() => {
-      if (active) setLeaderboard([]);
+      if (active) setLeaderboardMessage('Leaderboard unavailable.');
     });
     return () => {
       active = false;
@@ -72,7 +78,7 @@ const DashboardPage = () => {
           <p className="mt-2 text-3xl font-semibold tabular-nums">{complaintsLoading ? '—' : stats.total}</p>
         </div>
         {['Approved', 'Rejected'].map((status) => (
-          <div key={status}><p className="text-sm text-muted">{status}</p><p className="mt-2 text-3xl font-semibold tabular-nums">{complaintsLoading ? '�' : myComplaints.filter((item) => item.status === status).length}</p></div>
+          <div key={status}><p className="text-sm text-muted">{status}</p><p className="mt-2 text-3xl font-semibold tabular-nums">{complaintsLoading ? '—' : myComplaints.filter((item) => item.status === status).length}</p></div>
         ))}
         <div>
           <p className="text-sm text-muted">In Progress</p>
@@ -130,7 +136,7 @@ const DashboardPage = () => {
                 <p className="text-sm font-bold text-leaf">{item.points} pts</p>
               </div>
             ))}
-            {!leaderboard.length && <p className="text-sm text-muted">Leaderboard unavailable.</p>}
+            {!leaderboard.length && <p role="status" className="text-sm text-muted">{leaderboardMessage}</p>}
           </div>
         </Card>
       </section>
