@@ -52,6 +52,7 @@ const ComplaintsPage = () => {
         <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center">
           <select
             className="rounded-md border border-line bg-white px-3 py-2 text-sm"
+            aria-label="Filter by category"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           >
@@ -64,6 +65,7 @@ const ComplaintsPage = () => {
 
           <select
             className="rounded-md border border-line bg-white px-3 py-2 text-sm"
+            aria-label="Filter by status"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
