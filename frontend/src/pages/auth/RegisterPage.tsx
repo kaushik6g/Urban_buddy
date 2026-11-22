@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import api from '../../api/client';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
@@ -16,6 +17,22 @@ const RegisterPage = () => {
   const [communityName, setCommunityName] = useState('');
   const [communityCode, setCommunityCode] = useState('');
   const [error, setError] = useState('');
+
+  const [inviteToken] = useState(() => new URLSearchParams(window.location.hash.slice(1)).get('access_token'));
+  useEffect(() => {
+    if (!inviteToken) return;
+    window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
+    let active = true;
+    api.post('/auth/invitation', { accessToken: inviteToken }).then(({ data }) => {
+      if (active) {
+        setEmail(data.email);
+        setCommunityCode(data.code);
+      }
+    }).catch(() => {
+      if (active) setError('Could not load the invitation. Ask your admin for the community code.');
+    });
+    return () => { active = false; };
+  }, [inviteToken]);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
