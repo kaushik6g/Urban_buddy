@@ -25,6 +25,21 @@ router.post('/members', require('../utils/asyncHandler')(async (req, res) => {
     : query.eq('id',req.body.id).eq('community_id',admin.community_id);
   const result = await query.select('id').maybeSingle();
   if (result.error) throw result.error;
+  if (adding && !result.data) {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const existing = await db.from('users').select('id').eq('email', email).maybeSingle();
+    if (existing.error) throw existing.error;
+    if (!existing.data) {
+      const community = await db.from('communities').select('code').eq('id', admin.community_id).single();
+      if (community.error) throw community.error;
+      const invite = await db.auth.admin.inviteUserByEmail(email, {
+        redirectTo: process.env.REGISTRATION_URL || 'https://urban-buddy-delta.vercel.app/register',
+        data: { communityCode: community.data.code },
+      });
+      if (invite.error) return res.status(400).json({ message: 'Invitation could not be sent. Check the email and Supabase email settings.' });
+      return res.status(201).json({ message: 'Invitation sent. The registration link fills in the community code.' });
+    }
+  }
   if (!result.data) return res.status(409).json({message:'No eligible member found'});
   return res.status(204).end();
 }));
