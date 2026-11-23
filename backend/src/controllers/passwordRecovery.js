@@ -1,65 +1,70 @@
 const crypto = require('node:crypto');
 const bcrypt = require('bcryptjs');
-const supabase = require('../config/supabase');
-const asyncHandler = require('../utils/asyncHandler');
+const db = require('../config/supabase');
+const env = require('../config/env');
 const ApiError = require('../utils/apiError');
+const asyncHandler = require('../utils/asyncHandler');
 
-const digest = token => crypto.createHash('sha256').update(token).digest('hex');
-const requestReset = asyncHandler(async (req, res) => {
-  const { RESEND_API_KEY, PASSWORD_RESET_FROM, PASSWORD_RESET_ORIGIN } = process.env;
-  if (!RESEND_API_KEY || !PASSWORD_RESET_FROM || !PASSWORD_RESET_ORIGIN) {
-    throw new ApiError(503, 'Password recovery is temporarily unavailable.');
+function digest(code) {
+  return crypto.createHmac('sha256', env.jwtSecret).update('urbanbuddy-recovery:' + code).digest('hex');
+}
+function code(prefix, bytes) {
+  return prefix + '-' + crypto.randomBytes(bytes).toString('hex').toUpperCase().match(/.{4}/g).join('-');
+}
+function reply(res, values) {
+  return res.set('Cache-Control', 'no-store').json(values);
+}
+async function confirmPassword(req) {
+  const { data, error } = await db.from('users').select('id,password,password_version,role,community_id')
+    .eq('id', req.user.id).single();
+  if (error) throw error;
+  if (data.password_version !== (req.user.passwordVersion ?? 0) || !await bcrypt.compare(req.body.currentPassword, data.password)) {
+    throw new ApiError(403, 'Check your current password and try again.');
   }
-  const link = new URL('/reset-password', PASSWORD_RESET_ORIGIN);
-  if (link.protocol !== 'https:' && link.hostname !== 'localhost') {
-    throw new ApiError(503, 'Password recovery is temporarily unavailable.');
-  }
-  const token = crypto.randomBytes(32).toString('hex');
-  const now = Date.now();
-  const expires = new Date(now + 15 * 60000).toISOString();
-  // A conditional write allows one email per address per minute across instances.
-  const retryBefore = new Date(now + 14 * 60000).toISOString();
-  const { data, error } = await supabase.from('users')
-    .update({ password_reset_digest: digest(token), password_reset_expires_at: expires })
-    .eq('email', req.body.email.trim().toLowerCase())
-    .or('password_reset_expires_at.is.null,password_reset_expires_at.lt.' + retryBefore)
-    .select('email').maybeSingle();
-  if (error) throw new ApiError(503, 'Password recovery is temporarily unavailable.');
-  if (data) {
-    link.hash = 'token=' + token;
-    try {
-      const result = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: PASSWORD_RESET_FROM, to: [data.email],
-          subject: 'Reset your UrbanBuddy password',
-          text: 'Use this link within 15 minutes to choose a new password:\n' + link.href +
-            '\nIf you did not request this change, you can ignore this email.' })
-      });
-      if (!result.ok) throw new Error('Delivery failed');
-    } catch {
-      console.error('UrbanBuddy password recovery email delivery failed');
-    }
-  }
-  res.set('Cache-Control', 'no-store').json({ success: true });
+  return data;
+}
+async function save(user, changes) {
+  let query = db.from('users').update(changes)
+    .eq('id', user.id).eq('password_version', user.password_version)
+    .eq('role', user.role);
+  query = user.community_id ? query.eq('community_id', user.community_id) : query.is('community_id', null);
+  const { data, error } = await query.select('id').maybeSingle();
+  if (error) throw error;
+  if (!data) throw new ApiError(409, 'Your account changed. Sign in and try again.');
+}
+const generateCodes = asyncHandler(async (req,res) => {
+  const user = await confirmPassword(req);
+  const codes = Array.from({ length: 5 }, () => code('B',16));
+  await save(user, { backup_code_hashes: codes.map(digest),
+    recovery_community: user.role === 'user' ? user.community_id : null,
+    password_reset_digest: null, password_reset_expires_at: null, recovery_attempts: 0 });
+  reply(res,{ codes });
 });
-
-const resetPassword = asyncHandler(async (req, res) => {
-  const { token, password } = req.body;
-  const invalid = () => new ApiError(400, 'This link has expired or was already used. Request a new link.');
-  const hash = digest(token);
-  const { data: user, error } = await supabase.from('users').select('id,password_version')
-    .eq('password_reset_digest', hash).gt('password_reset_expires_at', new Date().toISOString()).maybeSingle();
-  if (error) throw new ApiError(503, 'Password recovery is temporarily unavailable.');
-  if (!user) throw invalid();
-  const passwordHash = await bcrypt.hash(password, 10);
-  const result = await supabase.from('users').update({ password: passwordHash, password_reset_digest: null,
-    password_reset_expires_at: null, password_version: user.password_version + 1 })
-    .eq('id', user.id).eq('password_reset_digest', hash)
-    .gt('password_reset_expires_at', new Date().toISOString()).select('id').maybeSingle();
-  if (result.error) throw new ApiError(503, 'Password recovery is temporarily unavailable.');
-  if (!result.data) throw invalid();
-  res.set('Cache-Control', 'no-store').json({ success: true });
+const changePassword = asyncHandler(async (req,res) => {
+  const user = await confirmPassword(req);
+  await save(user, { password: await bcrypt.hash(req.body.password,10), password_version: user.password_version+1,
+    password_reset_digest:null, password_reset_expires_at:null });
+  reply(res,{success:true});
 });
-
-module.exports = { requestReset, resetPassword };
+const issueMemberCode = asyncHandler(async (req,res) => {
+  const admin = await confirmPassword(req);
+  const temporary = code('T',6);
+  const { data,error } = await db.rpc('issue_member_recovery', { p_admin:admin.id, p_member:req.body.memberId,
+    p_digest:digest(temporary), p_version:admin.password_version });
+  if (error) throw error;
+  if (!data) throw new ApiError(403,'This member has not enabled recovery with your community.');
+  reply(res,{code:temporary});
+});
+const resetPassword = asyncHandler(async (req,res) => {
+  const input = req.body.code.trim().toUpperCase().replace(/[\s-]/g,'');
+  const temporary = input.startsWith('T');
+  const invalid = () => new ApiError(400,'The email or code is incorrect, expired, or already used.');
+  if (!/^(B[0-9A-F]{32}|T[0-9A-F]{12})$/.test(input)) throw invalid();
+  const canonical = input[0] + '-' + input.slice(1).match(/.{4}/g).join('-');
+  const { data,error } = await db.rpc('consume_account_code', { p_email:req.body.email.trim().toLowerCase(),
+    p_digest:digest(canonical), p_temporary:temporary, p_password:await bcrypt.hash(req.body.password,10) });
+  if (error) throw error;
+  if (!data) throw invalid();
+  reply(res,{success:true});
+});
+module.exports = { generateCodes, changePassword, issueMemberCode, resetPassword };
