@@ -1,5 +1,9 @@
 begin;
 
+-- UrbanBuddy authenticates through its API. Only its service role accesses account rows.
+revoke all on public.users from public, anon, authenticated;
+grant select,insert,update,delete on public.users to service_role;
+
 alter table public.users
   add column if not exists backup_code_hashes text[] not null default '{}',
   add column if not exists recovery_community uuid,
