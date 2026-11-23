@@ -1,3 +1,4 @@
+import PasswordField from '../../components/ui/PasswordField';
 import api from '../../api/client';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -96,15 +97,8 @@ const RegisterPage = () => {
               required
             />
           </label>
-          <label className="field-label">
-            Password (6 characters minimum)
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </label>
+          <PasswordField label="Password (6 characters minimum)" autoComplete="new-password" required
+            value={password} onChange={e => setPassword(e.target.value)} />
 
           <div className="grid gap-3 md:grid-cols-2">
             <label className="rounded-md border border-line bg-white px-3 py-2 text-sm text-ink">
