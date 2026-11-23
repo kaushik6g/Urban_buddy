@@ -3,64 +3,75 @@ import { Link } from 'react-router-dom';
 import api from '../../api/client';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
-import { Input } from '../../components/ui/Input';
 import PasswordField from '../../components/ui/PasswordField';
+import { Input } from '../../components/ui/Input';
+import { useAuth } from '../../hooks/useAuth';
 
-export default function PasswordRecoveryPage({ reset = false }: { reset?: boolean }) {
-  const [token] = useState(() => new URLSearchParams(window.location.hash.slice(1)).get('token') || '');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmation, setConfirmation] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(false);
-  const [error, setError] = useState('');
-  const validLink = /^[a-f0-9]{64}$/.test(token);
+type Mode = 'reset' | 'change' | 'backup';
+export default function PasswordRecoveryPage({ account = false }: { account?: boolean }) {
+  const { user, logout } = useAuth();
+  const [mode, setMode] = useState<Mode>(account ? 'change' : 'reset');
+  const [email,setEmail] = useState('');
+  const [code,setCode] = useState('');
+  const [current,setCurrent] = useState('');
+  const [password,setPassword] = useState('');
+  const [confirm,setConfirm] = useState('');
+  const [codes,setCodes] = useState<string[]>([]);
+  const [error,setError] = useState('');
+  const [done,setDone] = useState(false);
+  const [busy,setBusy] = useState(false);
+  function switchMode(next: Mode) {
+    setMode(next); setError(''); setCodes([]); setPassword(''); setConfirm(''); setCurrent('');
+  }
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (busy) return;
     setError('');
-    if (reset && password !== confirmation) {
-      setError('The passwords do not match.');
-      return;
-    }
+    if (mode !== 'backup' && confirm !== password) { setError('The passwords do not match.'); return; }
     setBusy(true);
     try {
-      if (reset) await api.post('/auth/reset-password', { token, password });
-      else await api.post('/auth/forgot-password', { email });
-      if (reset) window.history.replaceState(window.history.state, '', window.location.pathname);
-      setPassword('');
-      setConfirmation('');
-      setDone(true);
+      if (mode === 'backup') {
+        const {data} = await api.post('/auth/backup-codes', {currentPassword:current});
+        setCodes(data.codes);
+      } else {
+        if (mode === 'change') await api.post('/auth/change-password', {currentPassword:current,password});
+        else await api.post('/auth/reset-password', {email,code,password});
+        setDone(true); setCode(''); setPassword(''); setConfirm('');
+      }
+      setCurrent('');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Could not complete this request. Please try again.');
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   }
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-paper p-4">
-      <Card className="w-full max-w-md">
-        <h1 className="text-2xl font-semibold">{reset ? 'Set a new password' : 'Forgot password?'}</h1>
-        {done ? <p role="status" className="my-4">{reset ? 'Password changed. Sign in with your new password.'
-          : 'If an account uses this email, check your inbox for a reset link. The link expires in 15 minutes.'}</p>
-        : reset && !validLink ? <p role="alert" className="my-4">Open the link from your email or request a new one.</p>
-        : <form onSubmit={submit} className="my-4 space-y-4">
-            {reset ? <>
-              <PasswordField label="New password (6 characters minimum)" autoComplete="new-password" required
-                minLength={6} value={password} onChange={e => setPassword(e.target.value)} />
-              <PasswordField label="Confirm new password" autoComplete="new-password" required
-                value={confirmation} onChange={e => setConfirmation(e.target.value)} />
-            </> : <label className="field-label">Account email
-              <Input type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} />
-            </label>}
-            {error && <p role="alert" className="text-sm text-rose-600">{error}</p>}
-            <Button type="submit" disabled={busy}>{busy ? 'Please wait…' : reset ? 'Save password' : 'Send reset link'}</Button>
-          </form>}
-        <div className="flex flex-wrap gap-4 text-sm font-semibold text-leaf">
-          <Link to="/login">Back to sign in</Link>
-          {reset && !done && <Link to="/forgot-password">Request a new link</Link>}
-        </div>
-      </Card>
-    </main>
-  );
+  return <main className="flex min-h-screen items-center justify-center bg-paper p-4">
+    <Card className="w-full max-w-md">
+      <h1 className="text-2xl font-semibold">{account ? 'Account security' : 'Reset your password'}</h1>
+      {done ? <div className="my-4 space-y-3"><p role="status">Your password has changed. Sign in with your new password.</p>
+        <Link to="/login" onClick={logout} className="font-semibold text-leaf">Sign in</Link></div> : <>
+        {account && <div className="my-4 flex gap-2">{(['change','backup'] as const).map(item =>
+          <Button key={item} disabled={busy} variant={item === mode ? 'primary' : 'ghost'} onClick={() => switchMode(item)}>
+            {item === 'change' ? 'Change password' : 'Backup codes'}</Button>)}</div>}
+        {codes.length > 0 ? <section className="my-4 space-y-3"><p role="status">Save these codes somewhere private. Each works once and this is the only time they are shown.</p>
+          <ul className="font-mono text-sm">{codes.map(item => <li className="break-all py-1" key={item}>{item}</li>)}</ul>
+          <Button onClick={() => setCodes([])}>I’ve saved my codes</Button></section> :
+        <form className="my-4 space-y-4" onSubmit={submit}>
+          {mode === 'reset' ? <>
+            <p>Enter a saved backup code. If you lost it and enabled community recovery, ask your community admin for a temporary code.</p>
+            <label className="field-label">Account email<Input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} /></label>
+            <label className="field-label">Recovery code<Input required autoComplete="one-time-code" spellCheck={false} value={code} onChange={e=>setCode(e.target.value)} /></label>
+          </> : <>
+            {mode === 'backup' && <p>Generate five single-use codes. Generating a new set replaces your existing codes.
+              {user?.role === 'user' && user.communityId && ' This also enables your current community admin to issue a temporary code if you lose them.'}</p>}
+            <PasswordField required label="Current password" autoComplete="current-password" value={current} onChange={e=>setCurrent(e.target.value)} />
+          </>}
+          {mode !== 'backup' && <>
+            <PasswordField required minLength={6} label="New password (6 characters minimum)" autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)} />
+            <PasswordField required label="Confirm new password" autoComplete="new-password" value={confirm} onChange={e=>setConfirm(e.target.value)} />
+          </>}
+          {error && <p role="alert" className="text-rose-700">{error}</p>}
+          <Button type="submit" disabled={busy}>{busy ? 'Please wait…' : mode === 'backup' ? 'Generate backup codes' : 'Save new password'}</Button>
+        </form>}
+        <Link className="text-sm font-semibold text-leaf" to={account ? user?.role === 'admin' ? '/admin' : '/profile' : '/login'}>{account ? 'Back to account' : 'Back to sign in'}</Link>
+      </>}
+    </Card></main>;
 }
