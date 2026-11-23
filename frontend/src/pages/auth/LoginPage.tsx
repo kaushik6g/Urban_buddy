@@ -1,3 +1,4 @@
+import PasswordField from '../../components/ui/PasswordField';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
@@ -39,15 +40,9 @@ const LoginPage = () => {
               required
             />
           </label>
-          <label className="field-label">
-            Password
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </label>
+          <PasswordField label="Password" autoComplete="current-password" required
+            value={password} onChange={e => setPassword(e.target.value)} />
+          <Link className="inline-block text-sm font-semibold text-leaf" to="/forgot-password">Forgot password?</Link>
 
 
           {error && <p className="text-sm text-rose-600">{error}</p>}

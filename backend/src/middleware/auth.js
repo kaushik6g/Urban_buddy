@@ -2,7 +2,9 @@ const jwt = require('jsonwebtoken');
 const env = require('../config/env');
 const ApiError = require('../utils/apiError');
 
-const protect = (req, _res, next) => {
+const supabase = require('../config/supabase');
+
+const protect = async (req, _res, next) => {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
     return next(new ApiError(401, 'Unauthorized'));
@@ -12,7 +14,13 @@ const protect = (req, _res, next) => {
 
   try {
     const payload = jwt.verify(token, env.jwtSecret);
-    req.user = payload;
+    const { data, error } = await supabase.from('users').select('role,password_version')
+      .eq('id', payload.id).maybeSingle();
+    if (error) return next(new ApiError(503, 'Could not verify session'));
+    if (!data || (payload.passwordVersion ?? 0) !== data.password_version) {
+      return next(new ApiError(401, 'Please sign in again'));
+    }
+    req.user = { ...payload, role: data.role };
     return next();
   } catch (_error) {
     return next(new ApiError(401, 'Invalid or expired token'));
@@ -30,3 +38,4 @@ module.exports = {
   protect,
   allowRoles,
 };
+

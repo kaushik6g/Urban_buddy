@@ -1,3 +1,4 @@
+import PasswordRecoveryPage from './pages/auth/PasswordRecoveryPage';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AdminLayout from './components/layout/AdminLayout';
 import ProtectedRoute from './components/layout/ProtectedRoute';
@@ -21,6 +22,8 @@ const App = () => {
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<PasswordRecoveryPage key="request" />} />
+      <Route path="/reset-password" element={<PasswordRecoveryPage key="reset" reset />} />
       <Route path="/register" element={<RegisterPage />} />
 
       <Route element={<ProtectedRoute />}>
