@@ -52,4 +52,14 @@ router.post(
   login
 );
 
+const { requestReset, resetPassword } = require('../controllers/passwordRecovery');
+router.post('/forgot-password', body('email').isString().bail().trim().isEmail(), validate, requestReset);
+router.post('/reset-password',
+  body('token').isString().bail().matches(/^[a-f0-9]{64}$/),
+  body('password').isString().bail().isLength({ min: 6 })
+    .custom(value => Buffer.byteLength(value) <= 72)
+    .withMessage('Use at least 6 characters and at most 72 bytes.'),
+  validate, resetPassword);
+
 module.exports = router;
+
