@@ -52,14 +52,14 @@ router.post(
   login
 );
 
-const { requestReset, resetPassword } = require('../controllers/passwordRecovery');
-router.post('/forgot-password', body('email').isString().bail().trim().isEmail(), validate, requestReset);
-router.post('/reset-password',
-  body('token').isString().bail().matches(/^[a-f0-9]{64}$/),
-  body('password').isString().bail().isLength({ min: 6 })
-    .custom(value => Buffer.byteLength(value) <= 72)
-    .withMessage('Use at least 6 characters and at most 72 bytes.'),
-  validate, resetPassword);
-
+const { generateCodes, changePassword, issueMemberCode, resetPassword } = require('../controllers/passwordRecovery');
+const { protect, allowRoles } = require('../middleware/auth');
+const currentPassword = body('currentPassword').isString().bail().notEmpty();
+const newPassword = body('password').isString().bail().isLength({min:6})
+  .custom(value => Buffer.byteLength(value) <= 72).withMessage('Use at least 6 characters and at most 72 bytes.');
+router.post('/backup-codes', protect, currentPassword, validate, generateCodes);
+router.post('/change-password', protect, currentPassword, newPassword, validate, changePassword);
+router.post('/member-reset-code', protect, allowRoles('admin'), currentPassword, body('memberId').isUUID(), validate, issueMemberCode);
+router.post('/reset-password', body('email').isString().bail().trim().isEmail(),
+  body('code').isString().bail().isLength({min:1,max:100}), newPassword, validate, resetPassword);
 module.exports = router;
-
