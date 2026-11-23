@@ -10,6 +10,7 @@ const signToken = (user) =>
   jwt.sign(
     {
       id: user.id,
+      passwordVersion: user.password_version ?? 0,
       role: user.role,
       email: user.email,
       name: user.name,
@@ -163,7 +164,7 @@ const login = asyncHandler(async (req, res, next) => {
 
   const { data: user, error } = await supabase
     .from('users')
-    .select('id, name, email, role, points, created_at, password, community_id, communities!users_community_id_fkey(id, name, code)')
+    .select('id, name, email, role, points, created_at, password, password_version, community_id, communities!users_community_id_fkey(id, name, code)')
     .eq('email', email.toLowerCase())
     .maybeSingle();
 
@@ -209,3 +210,4 @@ module.exports = {
   register,
   login,
 };
+
