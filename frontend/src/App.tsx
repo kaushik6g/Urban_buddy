@@ -22,11 +22,12 @@ const App = () => {
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/forgot-password" element={<PasswordRecoveryPage key="request" />} />
-      <Route path="/reset-password" element={<PasswordRecoveryPage key="reset" reset />} />
+      <Route path="/forgot-password" element={<PasswordRecoveryPage key="reset" />} />
+      <Route path="/reset-password" element={<Navigate to="/forgot-password" replace />} />
       <Route path="/register" element={<RegisterPage />} />
 
       <Route element={<ProtectedRoute />}>
+        <Route path="/account/security" element={<PasswordRecoveryPage key="account" account />} />
         <Route element={<RoleRoute role="user" />}>
           <Route element={<UserLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
