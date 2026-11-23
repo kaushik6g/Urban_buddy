@@ -20,6 +20,7 @@ export default function PortalLayout({ portal, links }: Props) {
           </div>
           <div className="flex min-w-0 items-center gap-4 text-sm lg:order-3">
             <span className="hidden max-w-40 truncate text-[#c8dbd2] sm:inline">{user?.name}</span>
+            <NavLink to="/account/security" className="py-2 hover:underline">Account security</NavLink>
             <button onClick={logout} type="button" className="flex items-center gap-2 rounded-sm py-2 font-medium hover:underline">
               <LogOut size={15} aria-hidden="true" /> Sign out
             </button>
