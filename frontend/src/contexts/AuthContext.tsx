@@ -1,6 +1,6 @@
 import { createContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { authApi } from '../api/services';
+import { authApi, userApi } from '../api/services';
 import { storage } from '../utils/storage';
 import type { User } from '../types';
 
@@ -25,25 +25,39 @@ interface AuthContextValue {
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(storage.getUser());
-  const [token, setToken] = useState<string | null>(storage.getToken());
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [restoring, setRestoring] = useState(true);
+
   useEffect(() => {
-    if (!token || !user) {
+    let active = true;
+    const saved = storage.getToken();
+    if (!saved || window.location.pathname.replace(/\/$/, '') === '/login') {
       storage.clearAll();
-      setToken(null);
-      setUser(null);
+      setRestoring(false);
       return;
     }
-    storage.setToken(token);
-    storage.setUser(user);
-  }, [token, user]);
+    userApi.profile().then(({ data }) => {
+      const profile = data.data.user;
+      if (!profile?.id || !['user', 'admin'].includes(profile.role)) throw new Error('Invalid session');
+      if (active && storage.getToken() === saved) {
+        setUser(profile);
+        setToken(saved);
+      }
+    }).catch(() => {
+      if (active && storage.getToken() === saved) storage.clearAll();
+    }).finally(() => { if (active) setRestoring(false); });
+    return () => { active = false; };
+  }, []);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
       const response = await authApi.login({ email, password });
+      storage.setToken(response.data.token);
+      storage.setUser(response.data.user);
       setToken(response.data.token);
       setUser(response.data.user);
       return response.data.user as User;
@@ -70,6 +84,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         communityName,
         communityCode,
       });
+      storage.setToken(response.data.token);
+      storage.setUser(response.data.user);
       setToken(response.data.token);
       setUser(response.data.user);
       return response.data.user as User;
@@ -98,5 +114,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [user, token, loading]
   );
 
+  if (restoring) return <p role="status">Checking session…</p>;
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
