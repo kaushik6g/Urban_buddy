@@ -1,3 +1,4 @@
+import PasswordField from '../../components/ui/PasswordField';
 import api from '../../api/client';
 import { useEffect, useState } from 'react';
 import { userApi } from '../../api/services';
@@ -7,6 +8,24 @@ import Card from '../../components/ui/Card';
 const AdminUsersPage = () => {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
+  const [resetMember, setResetMember] = useState<{id:string;name:string} | null>(null);
+  const [currentPassword,setCurrentPassword] = useState('');
+  const [temporary,setTemporary] = useState('');
+  const [issuing,setIssuing] = useState(false);
+  const [issueError,setIssueError] = useState('');
+  function selectMember(member: typeof resetMember) {
+    setResetMember(member); setTemporary(''); setCurrentPassword(''); setIssueError('');
+  }
+  async function issueCode(event: React.FormEvent) {
+    event.preventDefault();
+    if (!resetMember || issuing) return;
+    setIssuing(true); setIssueError('');
+    try {
+      const {data} = await api.post('/auth/member-reset-code', {memberId:resetMember.id,currentPassword});
+      setTemporary(data.code);
+    } catch (err:any) { setIssueError(err.response?.data?.message || 'Could not generate a code.'); }
+    finally { setCurrentPassword(''); setIssuing(false); }
+  }
   const [email, setEmail] = useState('');
   const [link, setLink] = useState('');
   const [notice, setNotice] = useState('');
@@ -80,8 +99,20 @@ const AdminUsersPage = () => {
       </section>}
       {leaderboard.map(member => <div key={member.id} className="flex items-center justify-between gap-3 border-t border-line py-3">
         <div><p className="font-medium">{member.name}</p><p className="text-sm text-muted">Joined {new Date(member.joinedAt).toLocaleDateString()}</p></div>
+        <Button variant="ghost" disabled={issuing} onClick={() => selectMember(member)}>Generate reset code</Button>
         <Button variant="ghost" className="text-red-800" onClick={() => manage('remove', member.id)}>Remove</Button>
       </div>)}
+      {resetMember && <section className="my-4 rounded-md border border-line p-4">
+        <h3 className="font-semibold">Password recovery for {resetMember.name}</h3>
+        {temporary ? <p role="status">Share this code privately: <strong className="font-mono">{temporary}</strong>. It expires in 10 minutes.</p>
+          : <form onSubmit={issueCode} className="my-3 space-y-3">
+            <p>Verify the member’s identity before issuing a code. A new code replaces their previous temporary code.</p>
+            <PasswordField label="Your admin password" required autoComplete="current-password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)} />
+            {issueError && <p role="alert">{issueError}</p>}
+            <Button type="submit" disabled={issuing}>Issue temporary code</Button>
+          </form>}
+        <Button variant="ghost" disabled={issuing} onClick={() => selectMember(null)}>Close</Button>
+      </section>}
     </Card><Card>
       <h2 className="text-2xl font-semibold tracking-tight text-ink">Leaderboard</h2>
       <p className="mt-1 text-sm text-muted">Top contributors ranked by impact points.</p>
