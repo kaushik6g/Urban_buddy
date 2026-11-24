@@ -21,7 +21,7 @@ router.post(
     { name: 'image', maxCount: 1 },
   ]),
   [
-    body('title').trim().isLength({ min: 5 }).withMessage('Title must be at least 5 characters'),
+    body('title').isString().bail().custom(value => [...value.trim()].length >= 5).withMessage('Title must be at least 5 characters'),
     body('description')
       .trim()
       .isLength({ min: 15 })
