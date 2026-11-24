@@ -1,6 +1,9 @@
+const { randomInt } = require('node:crypto');
 const supabase = require('../config/supabase');
 
-const randomCode = () => Math.random().toString(36).slice(2, 8).toUpperCase();
+const codeAlphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const randomCode = () =>
+  Array.from({ length: 6 }, () => codeAlphabet[randomInt(codeAlphabet.length)]).join('');
 
 const generateUniqueCommunityCode = async () => {
   for (let attempt = 0; attempt < 10; attempt += 1) {
