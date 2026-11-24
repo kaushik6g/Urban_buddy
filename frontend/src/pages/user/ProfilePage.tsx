@@ -1,3 +1,4 @@
+import PasswordRecoveryPage from '../auth/PasswordRecoveryPage';
 import api from '../../api/client';
 import { useAuth } from '../../hooks/useAuth';
 import ComplaintPhoto from '../../components/ui/ComplaintPhoto';
@@ -172,7 +173,6 @@ const ProfilePage = () => {
     <div className="grid items-start gap-5 md:grid-cols-2">
       <Card className="border-t-4 border-t-leaf md:col-span-2">
         <h2 className="text-2xl font-semibold tracking-tight text-ink">Profile</h2>
-        <a href="/account/security" className="text-sm font-semibold text-leaf">Change password or manage backup codes</a>
         <div className="mt-3 grid gap-2 text-sm text-ink sm:grid-cols-2 lg:grid-cols-3">
           {draftName === null ? (
             <p><strong>Name:</strong> {profile.user.name} <button type="button" className="ml-2 text-leaf underline" onClick={() => { setDraftName(profile.user.name); setNameMessage(''); }}>Edit name</button></p>
@@ -239,6 +239,7 @@ const ProfilePage = () => {
         )}
       </Card>
 
+      <PasswordRecoveryPage account embedded />
       <Card className="md:col-span-2">
         <h3 className="text-xl font-semibold tracking-tight text-ink">Activity History</h3>
         <div className="mt-3 space-y-2">

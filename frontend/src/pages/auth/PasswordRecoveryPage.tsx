@@ -8,9 +8,9 @@ import { Input } from '../../components/ui/Input';
 import { useAuth } from '../../hooks/useAuth';
 
 type Mode = 'reset' | 'change' | 'backup';
-export default function PasswordRecoveryPage({ account = false }: { account?: boolean }) {
+export default function PasswordRecoveryPage({ account = false, embedded = false }: { account?: boolean; embedded?: boolean }) {
   const { user, logout } = useAuth();
-  const [mode, setMode] = useState<Mode>(account ? 'change' : 'reset');
+  const [mode, setMode] = useState<Mode>(embedded ? 'backup' : account ? 'change' : 'reset');
   const [email,setEmail] = useState('');
   const [code,setCode] = useState('');
   const [current,setCurrent] = useState('');
@@ -43,9 +43,9 @@ export default function PasswordRecoveryPage({ account = false }: { account?: bo
       setError(err.response?.data?.message || 'Could not complete this request. Please try again.');
     } finally { setBusy(false); }
   }
-  return <main className="flex min-h-screen items-center justify-center bg-paper p-4">
-    <Card className="w-full max-w-md">
-      <h1 className="text-2xl font-semibold">{account ? 'Account security' : 'Reset your password'}</h1>
+  const Heading = embedded ? 'h2' : 'h1';
+  const panel = <Card className={embedded ? "md:col-span-2" : "w-full max-w-md"}>
+      <Heading className="text-2xl font-semibold">{account ? 'Account security' : 'Reset your password'}</Heading>
       {done ? <div className="my-4 space-y-3"><p role="status">Your password has changed. Sign in with your new password.</p>
         <Link to="/login" onClick={logout} className="font-semibold text-leaf">Sign in</Link></div> : <>
         {account && <div className="my-4 flex gap-2">{(['change','backup'] as const).map(item =>
@@ -56,7 +56,7 @@ export default function PasswordRecoveryPage({ account = false }: { account?: bo
           <Button onClick={() => setCodes([])}>I’ve saved my codes</Button></section> :
         <form className="my-4 space-y-4" onSubmit={submit}>
           {mode === 'reset' ? <>
-            <p>Enter a saved backup code. If you lost it and enabled community recovery, ask your community admin for a temporary code.</p>
+            <p>Enter a backup code from Profile or a temporary code from your community admin. Temporary codes expire after 10 minutes.</p>
             <label className="field-label">Account email<Input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} /></label>
             <label className="field-label">Recovery code<Input required autoComplete="one-time-code" spellCheck={false} value={code} onChange={e=>setCode(e.target.value)} /></label>
           </> : <>
@@ -71,7 +71,8 @@ export default function PasswordRecoveryPage({ account = false }: { account?: bo
           {error && <p role="alert" className="text-rose-700">{error}</p>}
           <Button type="submit" disabled={busy}>{busy ? 'Please wait…' : mode === 'backup' ? 'Generate backup codes' : 'Save new password'}</Button>
         </form>}
-        <Link className="text-sm font-semibold text-leaf" to={account ? user?.role === 'admin' ? '/admin' : '/profile' : '/login'}>{account ? 'Back to account' : 'Back to sign in'}</Link>
+        {!embedded && <Link className="text-sm font-semibold text-leaf" to={account ? user?.role === 'admin' ? '/admin' : '/profile' : '/login'}>{account ? 'Back to account' : 'Back to sign in'}</Link>}
       </>}
-    </Card></main>;
+    </Card>;
+  return embedded ? panel : <main className="flex min-h-screen items-center justify-center bg-paper p-4">{panel}</main>;
 }
