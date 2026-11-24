@@ -12,7 +12,7 @@ const signedPhoto = async (value) => {
   return error ? '' : data.signedUrl;
 };
 
-const uploadImage = async (file) => {
+const uploadImage = async (file, rollbackUploads) => {
   if (!file) return '';
 
   if (hasCloudinaryConfig) {
@@ -22,6 +22,7 @@ const uploadImage = async (file) => {
     });
 
     await fs.unlink(file.path).catch(() => {});
+    rollbackUploads?.push(() => cloudinary.uploader.destroy(result.public_id));
     return result.secure_url;
   }
 
@@ -40,21 +41,23 @@ const uploadImage = async (file) => {
         ({ error } = await storage.upload(key, bytes, options));
       }
       if (error) throw error;
+      rollbackUploads?.push(() => storage.remove([key]));
       return prefix + key;
     } finally {
       await fs.unlink(file.path).catch(() => {});
     }
   }
 
+  rollbackUploads?.push(() => fs.unlink(file.path));
   return `/uploads/${path.basename(file.path)}`;
 };
 
-const uploadImages = async (files = []) => {
+const uploadImages = async (files = [], rollbackUploads) => {
   if (!files.length) return [];
 
   const urls = [];
   for (const file of files) {
-    const url = await uploadImage(file);
+    const url = await uploadImage(file, rollbackUploads);
     if (url) {
       urls.push(url);
     }

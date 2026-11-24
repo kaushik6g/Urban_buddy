@@ -1,3 +1,4 @@
+const fs = require('node:fs/promises');
 const supabase = require('../config/supabase');
 const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/apiError');
@@ -33,33 +34,25 @@ const mapComplaint = async (item) => {
 const createComplaint = asyncHandler(async (req, res, next) => {
   const { title, description, category, latitude, longitude, address } = req.body;
 
-  const { data: duplicate, error: duplicateError } = await supabase
-    .from('complaints')
-    .select('id')
-    .eq('created_by', req.user.id)
-    .eq('title', title)
-    .eq('category', category)
-    .eq('latitude', Number(latitude))
-    .eq('longitude', Number(longitude))
-    .in('status', ['Pending', 'Approved', 'In Progress'])
-    .limit(1)
-    .maybeSingle();
-
-  if (duplicateError) {
-    return next(new ApiError(500, duplicateError.message));
-  }
-
-  if (duplicate) {
-    return next(new ApiError(409, 'Similar complaint already exists and is under review'));
-  }
-
   const filesFromField = Array.isArray(req.files)
     ? req.files
     : [
         ...(req.files?.images || []),
         ...(req.files?.image || []),
       ];
-  const imageUrls = await uploadImages(filesFromField);
+  const duplicateMessage = 'You already have an open complaint with this title and category at this location.';
+  const { data: duplicate, error: duplicateError } = await supabase.rpc('has_active_complaint', {
+    p_reporter: req.user.id, p_title: title, p_category: category,
+    p_latitude: Number(latitude), p_longitude: Number(longitude),
+  });
+  if (duplicateError || duplicate) {
+    await Promise.allSettled(filesFromField.map(file => fs.unlink(file.path)));
+    if (duplicateError) return next(new ApiError(500, duplicateError.message));
+    return next(new ApiError(409, duplicateMessage));
+  }
+
+  const rollbackUploads = [];
+  const imageUrls = await uploadImages(filesFromField, rollbackUploads);
   const primaryImageUrl = imageUrls[0] || '';
 
   const { data, error } = await supabase
@@ -80,6 +73,10 @@ const createComplaint = asyncHandler(async (req, res, next) => {
     .single();
 
   if (error) {
+    if (error.code === '23505' && error.message?.includes('complaints_one_active_report')) {
+      await Promise.allSettled(rollbackUploads.map(remove => remove()));
+      return next(new ApiError(409, duplicateMessage));
+    }
     return next(new ApiError(500, error.message));
   }
 
