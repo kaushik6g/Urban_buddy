@@ -97,22 +97,24 @@ const AdminUsersPage = () => {
           </div>}
         </div>)}
       </section>}
-      {leaderboard.map(member => <div key={member.id} className="flex items-center justify-between gap-3 border-t border-line py-3">
+      {leaderboard.map(member => <div key={member.id} className="border-t border-line py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
         <div><p className="font-medium">{member.name}</p><p className="text-sm text-muted">Joined {new Date(member.joinedAt).toLocaleDateString()}</p></div>
-        <Button variant="ghost" disabled={issuing} onClick={() => selectMember(member)}>Generate reset code</Button>
+        <Button variant="ghost" disabled={issuing} aria-expanded={resetMember?.id === member.id} onClick={() => selectMember(resetMember?.id === member.id ? null : member)}>Generate reset code</Button>
         <Button variant="ghost" className="text-red-800" onClick={() => manage('remove', member.id)}>Remove</Button>
-      </div>)}
-      {resetMember && <section className="my-4 rounded-md border border-line p-4">
+        </div>
+      {resetMember?.id === member.id && resetMember && <section className="my-4 rounded-md border border-line p-4">
         <h3 className="font-semibold">Password recovery for {resetMember.name}</h3>
         {temporary ? <p role="status">Share this code privately: <strong className="font-mono">{temporary}</strong>. It expires in 10 minutes.</p>
           : <form onSubmit={issueCode} className="my-3 space-y-3">
-            <p>Verify the member’s identity before issuing a code. A new code replaces their previous temporary code.</p>
-            <PasswordField label="Your admin password" required autoComplete="current-password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)} />
+            <p>Verify the member’s identity before issuing a code. The member must first enable recovery by generating backup codes in Profile. A new temporary code replaces the previous one.</p>
+            <PasswordField label="Your admin password" autoFocus required autoComplete="current-password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)} />
             {issueError && <p role="alert">{issueError}</p>}
-            <Button type="submit" disabled={issuing}>Issue temporary code</Button>
+            <Button type="submit" disabled={issuing}>{issuing ? 'Generating…' : 'Issue temporary code'}</Button>
           </form>}
         <Button variant="ghost" disabled={issuing} onClick={() => selectMember(null)}>Close</Button>
       </section>}
+      </div>)}
     </Card><Card>
       <h2 className="text-2xl font-semibold tracking-tight text-ink">Leaderboard</h2>
       <p className="mt-1 text-sm text-muted">Top contributors ranked by impact points.</p>
