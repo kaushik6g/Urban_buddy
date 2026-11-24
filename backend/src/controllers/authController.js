@@ -157,57 +157,44 @@ const register = asyncHandler(async (req, res, next) => {
   });
 });
 
-/* ================= LOGIN (FIXED) ================= */
+const { createHmac, randomUUID } = require('node:crypto');
+
+function limited(res, seconds) {
+  return res.set('Retry-After', String(seconds)).set('Cache-Control', 'no-store').status(429).json({
+    success: false, message: `Too many sign-in attempts. Try again in ${seconds} seconds.`,
+  });
+}
 
 const login = asyncHandler(async (req, res, next) => {
-  const { email, password } = req.body;
+  const email = req.body.email.trim().toLowerCase();
+  const password = req.body.password;
+  const account = createHmac('sha256', env.jwtSecret).update('login-limit:' + email).digest('hex');
+  const ticket = randomUUID();
+  const { data: attempt, error: limitError } = await supabase.rpc('reserve_login_attempt', {
+    p_account: account, p_ticket: ticket,
+  }).single();
+  if (limitError || !attempt) throw new ApiError(503, 'Sign-in is temporarily unavailable.');
+  if (attempt.wait_seconds > 0) return limited(res, attempt.wait_seconds);
 
   const { data: user, error } = await supabase
     .from('users')
     .select('id, name, email, role, points, created_at, password, password_version, community_id, communities!users_community_id_fkey(id, name, code)')
-    .eq('email', email.toLowerCase())
+    .eq('email', email)
     .maybeSingle();
 
-  if (error) {
-    console.error("SUPABASE ERROR:", error);
-    return next(new ApiError(500, error.message));
-  }
-
-  if (!user) {
+  if (error) throw new ApiError(503, 'Sign-in is temporarily unavailable.');
+  if (!user || !await bcrypt.compare(password, user.password)) {
+    if (attempt.failure_delay > 0) return limited(res, attempt.failure_delay);
     return next(new ApiError(401, 'Invalid email or password'));
   }
 
-  // 🔥 CRITICAL FIX
-  if (!user.password) {
-    console.error("Password missing in DB!");
-    return next(new ApiError(500, 'Password not found in database'));
-  }
-
-  let isMatch = false;
-
-  try {
-    isMatch = await bcrypt.compare(password, user.password);
-  } catch (err) {
-    console.error("BCRYPT ERROR:", err);
-    return next(new ApiError(500, 'Error comparing passwords'));
-  }
-
-  if (!isMatch) {
-    return next(new ApiError(401, 'Invalid email or password'));
-  }
-
-  const token = signToken(user);
-
+  // Only the latest reservation may reset the counter. Keep newer attempts intact.
+  const { error: clearError } = await supabase.from('login_attempt_limits').update({ attempts: 0, blocked_until: '1970-01-01T00:00:00Z' })
+    .eq('account_key', account).eq('last_ticket', ticket);
+  if (clearError) throw new ApiError(503, 'Sign-in is temporarily unavailable.');
   return res.status(200).json({
-    success: true,
-    message: 'Login successful',
-    token,
-    user: sanitizeUser(user),
+    success: true, message: 'Login successful', token: signToken(user), user: sanitizeUser(user),
   });
 });
 
-module.exports = {
-  register,
-  login,
-};
-
+module.exports = { register, login };
