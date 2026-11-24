@@ -33,6 +33,12 @@ const RegisterPage = () => {
   const [invite] = useState(readInvitation);
   const [name, setName] = useState('');
   const [email, setEmail] = useState(invite?.email || '');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Kolkata' }).format(new Date());
+  const cutoffYear = Number(today.slice(0, 4)) - 18;
+  // A leap-day signup can have a non-leap cutoff year.
+  const cutoffDay = today.endsWith('-02-29') ? '-02-28' : today.slice(4);
+  const latestBirthDate = String(cutoffYear) + cutoffDay;
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'user' | 'admin'>('user');
   const [communityName, setCommunityName] = useState('');
@@ -60,7 +66,7 @@ const RegisterPage = () => {
 
     try {
       if (linkToken) {
-        await api.post('/auth/register', { name, email, password, role:'user', inviteToken:linkToken });
+        await api.post('/auth/register', { name, email, password, dateOfBirth, role:'user', inviteToken:linkToken });
         navigate('/login', {replace:true});
         return;
       }
@@ -69,6 +75,7 @@ const RegisterPage = () => {
         email,
         password,
         role,
+        dateOfBirth,
         communityName || undefined,
         communityCode || undefined
       );
@@ -97,6 +104,13 @@ const RegisterPage = () => {
               required
             />
           </label>
+          <label className="field-label">
+            Date of birth
+            <Input type="date" autoComplete="bday" required max={latestBirthDate}
+              value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)}
+              aria-describedby="signup-age-note" />
+          </label>
+          <p id="signup-age-note" className="text-sm text-muted">You must be 18 or older to create an account.</p>
           <PasswordField label="Password (6 characters minimum)" autoComplete="new-password" required
             value={password} onChange={e => setPassword(e.target.value)} />
 
