@@ -3,6 +3,7 @@ import api from './client';
 export const authApi = {
   register: (payload: {
     name: string;
+    dateOfBirth: string;
     email: string;
     password: string;
     role: 'user' | 'admin';

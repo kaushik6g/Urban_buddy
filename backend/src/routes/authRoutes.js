@@ -1,6 +1,7 @@
 const express = require('express');
 const { body } = require('express-validator');
 const { register, login } = require('../controllers/authController');
+const { isAdult } = require('../utils/registrationAge');
 const validate = require('../middleware/validate');
 
 const router = express.Router();
@@ -23,6 +24,10 @@ router.post('/invitation', require('../utils/asyncHandler')(async (req, res) => 
 router.post(
   '/register',
   [
+    body('dateOfBirth').isString().withMessage('Enter your date of birth.').bail()
+      .matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/).withMessage('Enter a valid date of birth.').bail()
+      .isISO8601({ strict: true }).withMessage('Enter a valid date of birth.').bail()
+      .custom(value => isAdult(value)).withMessage('You must be at least 18 to create an account.'),
     body('name').trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
     body('email').isEmail().withMessage('Please provide a valid email'),
     body('password')

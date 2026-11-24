@@ -15,6 +15,7 @@ interface AuthContextValue {
     email: string,
     password: string,
     role: 'user' | 'admin',
+    dateOfBirth: string,
     communityName?: string,
     communityCode?: string
   ) => Promise<User>;
@@ -71,6 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     email: string,
     password: string,
     role: 'user' | 'admin',
+    dateOfBirth: string,
     communityName?: string,
     communityCode?: string
   ) => {
@@ -81,6 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email,
         password,
         role,
+        dateOfBirth,
         communityName,
         communityCode,
       });
