@@ -19,16 +19,26 @@ const AdminDashboardPage = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [community, setCommunity] = useState<any>(null);
 
+  const [complaintState, setComplaintState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [codeMessage, setCodeMessage] = useState('Loading…');
+
   useEffect(() => {
-    Promise.all([adminApi.listComplaints(), adminApi.getCommunity()])
-      .then(([complaintsResponse, communityResponse]) => {
-        setComplaints(complaintsResponse.data.data);
-        setCommunity(communityResponse.data.data);
-      })
-      .catch(() => {
-        setComplaints([]);
-        setCommunity(null);
-      });
+    let active = true;
+    adminApi.listComplaints().then(({ data }) => {
+      if (active) {
+        setComplaints(data.data);
+        setComplaintState('ready');
+      }
+    }).catch(() => { if (active) setComplaintState('error'); });
+
+    adminApi.getCommunity().then(({ data }) => {
+      if (active) {
+        setCommunity(data.data);
+        setCodeMessage('Not generated yet');
+      }
+    }).catch(() => { if (active) setCodeMessage('Could not load invite code.'); });
+
+    return () => { active = false; };
   }, []);
 
 
@@ -50,27 +60,27 @@ const AdminDashboardPage = () => {
       <section aria-label="Summary" className="metric-strip">
         <div>
           <p className="text-sm text-muted">Total Complaints</p>
-          <p className="mt-2 text-3xl font-semibold tabular-nums">{stats.total}</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{complaintState === 'ready' ? stats.total : '—'}</p>
         </div>
         <div>
           <p className="text-sm text-muted">Pending</p>
-          <p className="mt-2 text-3xl font-semibold tabular-nums">{stats.pending}</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{complaintState === 'ready' ? stats.pending : '—'}</p>
         </div>
         <div>
           <p className="text-sm text-muted">Approved</p>
-          <p className="mt-2 text-3xl font-semibold tabular-nums">{stats.approved}</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{complaintState === 'ready' ? stats.approved : '—'}</p>
         </div>
         <div>
           <p className="text-sm text-muted">In Progress</p>
-          <p className="mt-2 text-3xl font-semibold tabular-nums">{stats.inProgress}</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{complaintState === 'ready' ? stats.inProgress : '—'}</p>
         </div>
         <div>
           <p className="text-sm text-muted">Resolved</p>
-          <p className="mt-2 text-3xl font-semibold tabular-nums">{stats.resolved}</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{complaintState === 'ready' ? stats.resolved : '—'}</p>
         </div>
         <div>
           <p className="text-sm text-muted">Rejected</p>
-          <p className="mt-2 text-3xl font-semibold tabular-nums">{stats.rejected}</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{complaintState === 'ready' ? stats.rejected : '—'}</p>
         </div>
       </section>
 
@@ -107,7 +117,9 @@ const AdminDashboardPage = () => {
               <p className="self-start rounded-full bg-paper px-2 py-1 text-xs text-ink">{item.status}</p>
             </div>
           ))}
-          {!complaints.length && <p className="text-sm text-muted">No complaints yet.</p>}
+          {complaintState === 'loading' && <p role="status">Loading complaints…</p>}
+          {complaintState === 'error' && <p role="alert">Could not load complaints.</p>}
+          {complaintState === 'ready' && !complaints.length && <p className="text-sm text-muted">No complaints yet.</p>}
         </div>
       </Card>
 
@@ -122,7 +134,7 @@ const AdminDashboardPage = () => {
         <p className="mt-3 text-sm text-ink">
           Current Code:{' '}
           <span className="rounded border border-line bg-paper px-2 py-1 font-mono text-leaf">
-            {community?.code || 'Not generated yet'}
+            {community?.code || codeMessage}
           </span>
         </p>
       </Card>

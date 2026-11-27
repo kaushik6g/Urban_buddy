@@ -8,7 +8,7 @@ import type { Complaint } from '../../types';
 
 const DashboardPage = () => {
   const { user } = useAuth();
-  const [myComplaints, setMyComplaints] = useState<Complaint[]>([]);
+  const [myComplaints, setMyComplaints] = useState<Pick<Complaint, 'id' | 'title' | 'status' | 'category' | 'createdAt' | 'rejectNote' | 'progressNote'>[]>([]);
   const [points, setPoints] = useState(user?.points || 0);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
@@ -23,7 +23,7 @@ const DashboardPage = () => {
       if (requestInProgress) return;
       requestInProgress = true;
       userApi.profile().then(({ data }) => { if (active) setPoints(data.data.user.points); }).catch(() => {});
-      complaintApi.my().then(({ data }) => {
+      complaintApi.mySummary().then(({ data }) => {
         if (active) {
           setMyComplaints(data.data);
           setComplaintError(false);
