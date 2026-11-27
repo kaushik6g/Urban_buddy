@@ -141,9 +141,11 @@ const getPublicComplaints = asyncHandler(async (req, res, next) => {
 });
 
 const getMyComplaints = asyncHandler(async (req, res, next) => {
+  const summary = req.query.view === 'summary';
+  const columns = summary ? 'id,title,status,category,created_at,admin_note,progress_note' : '*';
   const { data, error } = await supabase
     .from('complaints')
-    .select('*')
+    .select(columns)
     .eq('created_by', req.user.id)
     .order('created_at', { ascending: false });
 
@@ -153,7 +155,15 @@ const getMyComplaints = asyncHandler(async (req, res, next) => {
 
   return res.status(200).json({
     success: true,
-    data: await Promise.all(data.map(mapComplaint)),
+    data: summary ? data.map(item => ({
+      id: item.id,
+      title: item.title,
+      status: item.status,
+      category: item.category,
+      createdAt: item.created_at,
+      rejectNote: item.admin_note || '',
+      progressNote: item.progress_note || '',
+    })) : await Promise.all(data.map(mapComplaint)),
   });
 });
 

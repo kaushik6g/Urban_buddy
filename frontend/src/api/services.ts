@@ -31,6 +31,7 @@ export const complaintApi = {
     }),
   list: (params: { page?: number; limit?: number; category?: string; status?: string }) =>
     api.get('/complaints', { params }),
+  mySummary: () => api.get('/complaints/my', { params: { view: 'summary' } }),
   my: () => api.get('/complaints/my'),
 };
 
